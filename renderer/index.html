@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>Auto Farming FB -AREZDEV</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2563eb',
+            accent: '#22d3ee',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen font-sans transition-colors duration-300">
+
+  <div class="max-w-2xl mx-auto mt-0 p-8 rounded-xl shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-1xl font-bold text-gray-800 dark:text-gray-100 tracking-tight"> <span class="text-primary">- AREZDEV</span></h1>
+      <button id="toggle-dark" class="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition">🌙</button>
+    </div>
+
+    <!-- Main button -->
+    <div class="flex gap-3 mb-6">
+      <button id="create-fb" class="bg-primary hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition font-semibold flex items-center gap-2">
+        <span>Reg</span>
+      </button>
+      <button id="verify-fb" class="bg-primary hover:bg-blue-700 text-white px-5 py-2 rounded-lg shadow transition font-semibold flex items-center gap-2">
+        <span>Verify</span>
+      </button>
+      <button id="stop-create-fb" class="hidden bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg shadow transition font-semibold flex items-center gap-2">
+        <span>Stop</span>
+      </button>
+      <button id="get-cokis" class="bg-accent hover:bg-cyan-400 text-white px-5 py-2 rounded-lg shadow transition font-semibold flex items-center gap-2">
+        <span>Get Cookie</span>
+      </button>
+      <button id="config" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded-lg shadow transition font-semibold flex items-center gap-2">
+        <span>Settings</span>
+      </button>
+    </div>
+
+    <div id="loading-appium" style="
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      font-size: 18px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      flex-direction: column;
+    ">
+      <div class="loader" style="margin-bottom: 12px; border: 4px solid #f3f3f3; border-top: 4px solid #00bcd4; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+      <span>Menyiapkan Appium...</span>
+    </div>
+
+    <div class="mb-4">
+      <span id="progress-info" class="text-primary dark:text-accent font-mono text-base">Ready...</span>
+    </div>
+
+    <div id="device-logs" class="space-y-4"></div>
+
+    <pre id="output" class="text-xs mt-6 p-2 bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded hidden text-gray-800 dark:text-gray-200"></pre>
+  </div>
+  
+  <!-- script loading -->
+  <script>
+    const loadingOverlay = document.getElementById('loading-appium');
+    const loadingText = loadingOverlay?.querySelector('span');
+
+    window.electronAPI.onNoDevicesFound(() => {
+      const loadingDiv = document.getElementById('progress-info');
+      if (loadingDiv) {
+        loadingDiv.innerText = "❌ Tidak ada perangkat yang terdeteksi!";
+        loadingDiv.style.color = "red";
+      }
+    });
+
+    // Simpan daftar device yang masih loading
+    const loadingDevices = new Set();
+
+    window.electronAPI.onAppiumLoading((_, payload) => {
+      if (!payload || !payload.udid || !payload.status) return;
+
+      const { udid, status } = payload;
+
+      if (status === 'starting') {
+        loadingDevices.add(udid);
+        loadingOverlay.style.display = 'flex';
+        //loadingText.textContent = `Menyiapkan Appium untuk ${udid}...`;
+        loadingText.textContent = `Loading device: ${udid}`;
+      } else if (status === 'done') {
+        loadingDevices.delete(udid);
+        if (loadingDevices.size === 0) {
+          loadingOverlay.style.display = 'none';
+        } else {
+          loadingText.textContent = `Menyiapkan ${loadingDevices.size} device lagi...`;
+        }
+      }
+    });
+
+    window.electronAPI.onReadyToRun(() => {
+      loadingOverlay.style.display = 'none';
+      prepareDeviceLogTables(); // atau logic kamu setelah appium siap
+    });
+  </script>
+
+  <script>
+    // Dark mode toggle
+    document.getElementById('toggle-dark').onclick = () => {
+      document.documentElement.classList.toggle('dark');
+    };
+
+    const delay = (ms) => new Promise(res => setTimeout(res, ms));
+    const outputMap = {};
+    let isCancelled = false;
+
+    function cancelAutoCreate() {
+      isCancelled = true;
+      document.getElementById("stop-create-fb").disabled = true;
+      document.getElementById("create-fb").textContent = "⏳ Stopping...";
+    }
+
+    async function prepareDeviceLogTables() {
+      const table = document.createElement('table');
+      table.className = 'table-fixed w-full text-sm border border-gray-200 dark:border-gray-700 mb-4 rounded-lg overflow-hidden shadow';
+      table.innerHTML = `
+        <thead class="bg-gray-100 dark:bg-gray-700">
+          <tr>
+        <th class="px-3 py-2 border-b border-gray-200 dark:border-gray-700 w-12 text-left text-gray-700 dark:text-gray-200">#</th>
+        <th class="px-3 py-2 border-b border-gray-200 dark:border-gray-700 w-40 text-left text-gray-700 dark:text-gray-200">Device</th>
+        <th class="px-3 py-2 border-b border-gray-200 dark:border-gray-700 w-56 text-left text-gray-700 dark:text-gray-200">Status</th>
+          </tr>
+        </thead>
+      `;
+      const devices = await window.electronAPI.getDeviceConfigs();
+      const container = document.getElementById('device-logs');
+      container.innerHTML = '';
+
+      devices.forEach((device, index) => {
+        const { udid } = device;
+
+        const tbody = document.createElement('tbody');
+        tbody.className = 'text-xs';
+
+        const row = document.createElement('tr');
+        const statusCell = document.createElement('td');
+        statusCell.className = 'border-b border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-3 py-2';
+
+        row.innerHTML = `
+          <td class="border-b border-gray-200 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-200">${index + 1}</td>
+          <td class="border-b border-gray-200 dark:border-gray-700 px-3 py-2 text-gray-700 dark:text-gray-200">${udid}</td>
+        `;
+        row.appendChild(statusCell);
+        tbody.appendChild(row);
+        table.appendChild(tbody);
+        container.appendChild(table);
+
+        outputMap[udid] = statusCell;
+      });
+    }
+
+    function updateStatus(udid, message) {
+      const cell = outputMap[udid];
+      if (!cell) return;
+
+      cell.innerText = message;
+      const row = cell.parentElement;
+
+      row.className =
+        message.includes('✅') ? 'bg-green-100 dark:bg-green-900' :
+        message.includes('❌') ? 'bg-red-100 dark:bg-red-900' :
+        message.includes('⌛') ? 'bg-yellow-100 dark:bg-yellow-900' : '';
+    }
+
+    async function getCokisFB() {
+      await prepareDeviceLogTables();
+
+      Object.keys(outputMap).forEach(udid => {
+        updateStatus(udid, '⌛ Get Cookie...');
+      });
+
+      await window.electronAPI.getCokisFB();
+    }
+
+    function allDeviceDone() {
+      return Object.values(outputMap).every(status =>
+        typeof status === 'string' &&
+        !status.includes("⌛") &&
+        !status.includes("Verifikasi") &&
+        !status.includes("checkpoint")
+      );
+    }
+
+    async function waitUntilAllDone(timeout = 15000) {
+      const interval = 1000;
+      let waited = 0;
+
+      while (!allDeviceDone() && waited < timeout) {
+        await delay(interval);
+        waited += interval;
+      }
+    }
+
+    async function autocreateFB() {
+      let result = {};
+      let berapaKaliJalan = 1;
+
+      const btnStart = document.getElementById("create-fb");
+      const btnStop = document.getElementById("stop-create-fb");
+      const progressInfo = document.getElementById("progress-info");
+
+      if (!btnStart || !btnStop || !progressInfo) {
+        alert("❌ Elemen UI tidak ditemukan.");
+        return;
+      }
+
+      try {
+        const settings = await window.electronAPI?.getSettings?.();
+        if (settings?.prosesKrit > 0) {
+          berapaKaliJalan = settings.prosesKrit;
+        } else {
+          alert("⚠️ prosesKrit tidak valid, memakai default (1).");
+        }
+      } catch (err) {
+        alert("❌ Gagal ambil pengaturan: " + (err.message || err));
+        return;
+      }
+
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      const originalText = btnStart.textContent;
+      btnStart.textContent = "Running...";
+      isCancelled = false;
+
+      try {
+        await delay(2000);
+        await prepareDeviceLogTables();
+
+        Object.keys(outputMap).forEach(udid => {
+          updateStatus(udid, '⌛ Loading...');
+        });
+
+        for (let i = 0; i < berapaKaliJalan; i++) {
+          if (isCancelled) {
+            progressInfo.textContent = '';
+            await delay(1500);
+            alert("⚠️ Proses dibatalkan.");
+            return;
+          }
+
+          progressInfo.textContent = `⏳ Proses berjalan: ${i + 1} / ${berapaKaliJalan}`;
+
+          try {
+            await window.electronAPI.restartModem();
+            await delay(7000);
+          } catch (err) {
+            console.error(`❌ Gagal restart modem (iterasi ${i + 1}):`, err);
+          }
+
+          if (isCancelled) break;
+
+          try {
+            const res = await window.electronAPI.startCreateFB();
+            if (res) Object.assign(result, res);
+          } catch (err) {
+            console.error(`❌ Gagal createFB (iterasi ${i + 1}):`, err);
+          }
+        }
+
+        if (!isCancelled) {
+          await waitUntilAllDone();
+          await delay(1500);
+          progressInfo.textContent = '';
+          alert("✅ Semua proses selesai.");
+        }
+
+      } catch (err) {
+        console.error("❌ Terjadi error:", err);
+        alert("Terjadi kesalahan: " + (err.message || err));
+      } finally {
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+        btnStart.textContent = originalText;
+        isCancelled = false;
+      }
+    }
+
+    //auto verifikasi FB
+    async function autoverifyFB() {
+      let result = {};
+      let berapaKaliJalan = 1;
+
+      const btnStart = document.getElementById("verify-fb");
+      const btnStop = document.getElementById("stop-create-fb");
+      const progressInfo = document.getElementById("progress-info");
+
+      if (!btnStart || !btnStop || !progressInfo) {
+        alert("❌ Elemen UI tidak ditemukan.");
+        return;
+      }
+
+      try {
+        const settings = await window.electronAPI?.getSettings?.();
+        if (settings?.prosesKrit > 0) {
+          berapaKaliJalan = settings.prosesKrit;
+        } else {
+          alert("⚠️ prosesKrit tidak valid, memakai default (1).");
+        }
+      } catch (err) {
+        alert("❌ Gagal ambil pengaturan: " + (err.message || err));
+        return;
+      }
+
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      const originalText = btnStart.textContent;
+      btnStart.textContent = "Running...";
+      isCancelled = false;
+
+      try {
+        await delay(2000);
+        await prepareDeviceLogTables();
+
+        Object.keys(outputMap).forEach(udid => {
+          updateStatus(udid, '⌛ Loading...');
+        });
+
+        for (let i = 0; i < berapaKaliJalan; i++) {
+          if (isCancelled) {
+            progressInfo.textContent = '';
+            await delay(1500);
+            alert("⚠️ Proses dibatalkan.");
+            return;
+          }
+
+          progressInfo.textContent = `⏳ Proses berjalan: ${i + 1} / ${berapaKaliJalan}`;
+
+          try {
+            await window.electronAPI.restartModem();
+            await delay(7000);
+          } catch (err) {
+            console.error(`❌ Gagal restart modem (iterasi ${i + 1}):`, err);
+          }
+
+          if (isCancelled) break;
+
+          try {
+            const res = await window.electronAPI.startVerifyFB();
+            if (res) Object.assign(result, res);
+          } catch (err) {
+            console.error(`❌ Gagal verifyFB (iterasi ${i + 1}):`, err);
+          }
+        }
+
+        if (!isCancelled) {
+          await waitUntilAllDone();
+          await delay(1500);
+          progressInfo.textContent = '';
+          alert("✅ Semua proses selesai.");
+        }
+
+      } catch (err) {
+        console.error("❌ Terjadi error:", err);
+        alert("Terjadi kesalahan: " + (err.message || err));
+      } finally {
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+        btnStart.textContent = originalText;
+        isCancelled = false;
+      }
+    }
+    
+    async function autocreateThreads() {
+      const output = document.getElementById('output');
+      output.classList.remove('hidden');
+      output.textContent = '⌛ Creating Facebook accounts...\n';
+
+      const results = await window.electronAPI.startCreateThreads();
+
+      results.forEach((res, idx) => {
+        const status = res.status === 'fulfilled'
+          ? `✅ Device #${idx + 1} success`
+          : `❌ Device #${idx + 1} failed: ${res.reason}`;
+        output.textContent += `${status}\n`;
+      });
+    }
+
+    window.electronAPI.onFBLog((_, { udid, message }) => {
+      updateStatus(udid, message);
+    });
+
+    document.getElementById('create-fb').addEventListener('click', autocreateFB);
+    document.getElementById('verify-fb').addEventListener('click', autoverifyFB);
+    document.getElementById('stop-create-fb').addEventListener('click', cancelAutoCreate);
+    document.getElementById('get-cokis').addEventListener('click', getCokisFB);
+    document.getElementById('config').addEventListener('click', () => {
+      window.electronAPI.openSettingsWindow();
+    });
+
+    window.addEventListener('DOMContentLoaded', prepareDeviceLogTables);
+  </script>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Settings</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white p-6 rounded shadow-md w-full max-w-md space-y-5">
+
+    <!-- Jalankan Berapa Kali AutoCreate -->
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Ngekrit peng piro?</label>
+      <input type="number" id="process_create" value="1" min="1" class="mt-1 block w-full rounded border-gray-300 shadow-sm mb-2" />
+    </div>
+
+    <!-- Mail Services -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Mail Service</label>
+      <select id="mailService" class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+        <option selected value="sohibmail">SohibMail</option>
+        <option value="gmailotp">Gmailotp</option>
+        <option value="hotmail">Hotmail</option>
+        <option value="fexplus">Fex.plus</option>
+        <option value="fviainboxes">FviaInboxes.com</option>
+        <option value="tempmail">Temp-mail.io</option>
+        <option value="kukulu">M.kuku.lu</option>
+        <option value="off">off</option>
+      </select>
+    </div>
+
+    <!-- FviaInboxes -->
+    <div id="fviainboxesConfig" class="hidden">
+      <label class="block text-sm font-medium text-gray-700">FviaInboxes Domain :</label>
+      <input type="text" id="fviainboxesDomain" placeholder="isi random atau isi sendiri" class="mt-1 block w-full rounded border-gray-300 shadow-sm mb-2" />
+    </div>
+
+    <!-- GMAIL OTP SETTINGS -->
+    <div id="gmailotpConfig" class="hidden">
+      <label class="block text-sm font-medium text-gray-700">Gmail api key</label>
+      <input type="text" id="gmailotp_apikey" placeholder="Masukkan API Key" class="mt-1 block w-full rounded border-gray-300 shadow-sm mb-2" />
+    </div>
+
+    <!-- input untuk SohibMail -->
+    <div id="SohibMailConfig" class="hidden">
+      <label class="block text-sm font-medium text-gray-700">Email Domain SohibMail</label>
+      <input type="text" id="sohibDomain" placeholder="domain.com" class="mt-1 block w-full rounded border-gray-300 shadow-sm mb-2" />
+    </div>
+
+    <!-- Input config untuk hotmail -->
+    <div id="hotmailConfigContainer" class="hidden">
+      <label class="block text-sm font-medium text-gray-700">Hotmail Config</label>
+      <input type="text" id="hotmailApiKey" placeholder="Masukkan API Key" class="mt-1 block w-full rounded border-gray-300 shadow-sm mb-2" />
+      <select id="hotmailConfig" class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+        <option value="1">Hotmail</option>
+        <option value="2">Outlook</option>
+        <option value="5">Hotmail Trusted</option>
+        <option value="6">Outlook Trusted</option>
+      </select>
+    </div>
+
+    <!-- Input domain untuk kukulu -->
+    <div id="kukuluDomainContainer" class="hidden">
+      <label class="block text-sm font-medium text-gray-700">Email Domain m.kuku.lu</label>
+      <input type="text" id="kukuluDomain" placeholder="{ domain email }" class="mt-1 block w-full rounded border-gray-300 shadow-sm" />
+    </div>
+
+    <!-- Temporary Number Services -->
+    <div class="flex items-center">
+      <input id="use5sim" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+      <label for="use5sim" class="ml-2 block text-sm text-gray-700">Nomer</label>
+    </div>
+
+    <!-- Setting select number services -->
+    <div id="servicesNumberConfig" class="hidden">
+      <select id="services_number" class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+        <option value="off">off</option>
+        <option value="0">5sim</option>
+        <option value="1">vak-sms</option>
+      </select>
+    </div>
+
+    <!-- 5SIM Config -->
+    <div id="fivesim_setting" class="hidden">
+      <div class="flex space-x-2">
+        <input type="text" id="operator" placeholder="operator_5sim" class="block flex-1 rounded border-gray-300 shadow-sm px-2 py-1" />
+        <input type="text" id="country" placeholder="country_5sim" class="block flex-1 rounded border-gray-300 shadow-sm px-2 py-1" />
+      </div>
+    </div>
+
+    <!-- Vak-SMS Config -->
+    <div id="vaksms_setting" class="hidden">
+      <div class="flex space-x-2">
+        <input type="text" id="operator_vaksms" placeholder="operator_vaksms" class="block flex-1 rounded border-gray-300 shadow-sm px-2 py-1" />
+        <input type="text" id="country_vaksms" placeholder="country_vaksms" class="block flex-1 rounded border-gray-300 shadow-sm px-2 py-1" />
+      </div>
+    </div>
+
+    <!-- Checkbox changeEmail -->
+    <div class="flex items-center">
+      <input id="changeEmail" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+      <label for="changeEmail" class="ml-2 block text-sm text-gray-700">Change Email</label>
+      <select id="changeEmailConfig" class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+        <option value="0">Nomer</option>
+        <option value="1">Gmail</option>
+      </select>
+    </div>
+
+    <!-- Proxy -->
+    <div class="flex items-center">
+      <input id="proxy" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+      <label for="proxy" class="ml-2 block text-sm text-gray-700">Aktifkan SocksDroid (proxy)</label>
+    </div>
+
+    <!-- Input password -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Password Facebook</label>
+      <input type="text" id="password_fb" placeholder="Masukkan password" class="mt-1 block w-full rounded border-gray-300 shadow-sm" />
+    </div>
+
+    <!-- Server save akun -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Server Save Akun ID</label>
+      <input type="text" id="serverAkun" placeholder="id server" class="mt-1 block w-full rounded border-gray-300 shadow-sm" />
+    </div>
+
+    <!-- Input delay antar device -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Delay antar device (detik)</label>
+      <input type="number" id="delayDevice" value="15" min="5" class="mt-1 block w-full rounded border-gray-300 shadow-sm" />
+    </div>
+
+    <!-- Input wait code -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700">Delay tunggu kode (detik)</label>
+      <input type="number" id="waitCode" value="10" min="5" class="mt-1 block w-full rounded border-gray-300 shadow-sm" />
+    </div>
+
+    <!-- Tombol Save -->
+    <div class="text-right">
+      <button id="saveBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Simpan</button>
+    </div>
+  </div>
+
+  <!-- <script src="/settings.js"></script> -->
+   <script>
+    const prosesKrit = document.getElementById('process_create');
+    const changeEmail = document.getElementById('changeEmail');
+    const changeEmailConfig = document.getElementById('changeEmailConfig');
+    const serverAkun = document.getElementById('serverAkun');
+    const mailService = document.getElementById('mailService');
+    const proxy = document.getElementById('proxy');
+    const delayDevice = document.getElementById('delayDevice');
+    const waitCode = document.getElementById('waitCode');
+    const passwordFB = document.getElementById('password_fb');
+    const saveBtn = document.getElementById('saveBtn');
+
+    //Email services...
+    const gmailotpContainer = document.getElementById('gmailotpConfig');
+    const gmailotp_access_key = document.getElementById('gmailotp_apikey');
+    const hotmailConfigContainer = document.getElementById('hotmailConfigContainer');
+    const hotmailConfig = document.getElementById('hotmailConfig');
+    const hotmailApiKey = document.getElementById('hotmailApiKey');
+    const kukuluDomainContainer = document.getElementById('kukuluDomainContainer');
+    const kukuluDomain = document.getElementById('kukuluDomain');
+    const sohibMailDomainContainer = document.getElementById('SohibMailConfig');
+    const sohibMailDomain = document.getElementById('sohibDomain');
+    const fviainboxesConfig = document.getElementById('fviainboxesConfig');
+    const fviainboxesDomain = document.getElementById('fviainboxesDomain');
+    
+    // Temporary Number Services
+    const Services_Number = document.getElementById('services_number');
+    const use5sim = document.getElementById('use5sim');
+    // 5sim config fields
+    const fivesimConfig = document.getElementById('fivesim_setting');
+    const use5sim_operator = fivesimConfig.querySelector('input[placeholder="operator_5sim"]');
+    const use5sim_country = fivesimConfig.querySelector('input[placeholder="country_5sim"]');
+    // vaksms config fields
+    const vaksmsConfig = document.getElementById('vaksms_setting');
+    const vaksms_operator = vaksmsConfig.querySelector('input[placeholder="operator_vaksms"]');
+    const vaksms_country = vaksmsConfig.querySelector('input[placeholder="country_vaksms"]');
+    // Config Number Services
+    const Services_NumberConfig = document.getElementById('servicesNumberConfig');
+
+    // Listener Config
+    function updateMailServiceConfig() {
+      fviainboxesConfig.classList.toggle('hidden', mailService.value !== 'fviainboxes')
+      sohibMailDomainContainer.classList.toggle('hidden', mailService.value !== 'sohibmail');
+      gmailotpContainer.classList.toggle('hidden', mailService.value !== 'gmailotp');
+      hotmailConfigContainer.classList.toggle('hidden', mailService.value !== 'hotmail');
+      kukuluDomainContainer.classList.toggle('hidden', mailService.value !== 'kukulu');
+    }
+
+    function updateNumberServiceConfig() {
+      if (!use5sim.checked) Services_Number.value = 'off';
+      Services_NumberConfig.classList.toggle('hidden', !use5sim.checked);
+      fivesimConfig.classList.toggle('hidden', !use5sim.checked || Services_Number.value !== '0');
+      vaksmsConfig.classList.toggle('hidden', !use5sim.checked || Services_Number.value !== '1');
+    }
+
+    mailService.addEventListener('change', updateMailServiceConfig);
+    use5sim.addEventListener('change', updateNumberServiceConfig);
+    Services_Number.addEventListener('change', updateNumberServiceConfig);
+
+    updateMailServiceConfig();
+    updateNumberServiceConfig();
+
+    // Load data saat halaman dibuka
+    window.electronAPI.getSettings().then(settings => {
+    if (settings) {
+        prosesKrit.value = settings.prosesKrit ?? 1;
+        changeEmail.checked = settings.changeEmail || false;
+        changeEmailConfig.value = settings.changeEmailConfig ?? '0';
+        serverAkun.value = settings.serverAkun ?? 'AKU';
+        proxy.checked = settings.proxy || false;
+        delayDevice.value = settings.delayDevice ?? 15;
+        waitCode.value = settings.waitCode ?? 10;
+        passwordFB.value = settings.passwordFB ?? 'Diablo2025';
+
+        //services email...
+        mailService.value = settings.mailService || 'off';
+        gmailotp_access_key.value = settings.gmailotp_access_key ?? 'SNy2lbRDfKlozEL5tSfiIl1BxhB0KbkI';
+        hotmailConfig.value = settings.hotmailConfig ?? '1';
+        hotmailApiKey.value = settings.hotmailApiKey ?? 'jn5N51eNaKqESCLFN8KzqaSUN';
+        kukuluDomain.value = settings.kukuluDomain ?? 'boxfi.uk';
+        sohibMailDomain.value = settings.sohibMailDomain ?? 'sohibmail.uk';
+        fviainboxesDomain.value = settings.fviainboxesDomain ?? 'fviainboxes.com';
+
+        //services number...
+        use5sim.checked = settings.use5sim || false;
+        Services_Number.value = settings.Services_Number ?? '0';
+        use5sim_country.value = settings.use5sim_country ?? 'england';
+        use5sim_operator.value = settings.use5sim_operator ?? 'virtual60';
+        vaksms_country.value = settings.vaksms_country ?? 'kenya';
+        vaksms_operator.value = settings.vaksms_operator ?? 'airtel';
+    }
+    });
+    // Save saat tombol ditekan
+    saveBtn.addEventListener('click', () => {
+    const data = {
+        //services app
+        serverAkun: serverAkun.value,
+        proxy: proxy.checked,
+        delayDevice: Number(delayDevice.value),
+        waitCode: Number(waitCode.value),
+        prosesKrit: Number(prosesKrit.value),
+        passwordFB: passwordFB.value,
+        changeEmail: changeEmail.checked,
+        changeEmailConfig: changeEmailConfig.value,
+
+        //emails
+        mailService: mailService.value,
+        sohibMailDomain: sohibMailDomain.value,
+        fviainboxesDomain: fviainboxesDomain.value,
+        kukuluDomain: kukuluDomain.value,
+        hotmailConfig: hotmailConfig.value,
+        hotmailApiKey: hotmailApiKey.value,
+        gmailotp_access_key: gmailotp_access_key.value,
+
+        //numbers
+        use5sim: use5sim.checked,
+        Services_Number: Services_Number.value,
+        vaksms_country: vaksms_country.value,
+        vaksms_operator: vaksms_operator.value,
+        use5sim_operator: use5sim_operator.value,
+        use5sim_country: use5sim_country.value,
+    };
+      console.log("Simpan settings:", data);
+      window.electronAPI.saveSettings(data);
+      alert("Pengaturan berhasil disimpan!");
+      window.close();
+    });
+   </script>
+</body>
+</html>
