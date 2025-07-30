@@ -10,6 +10,7 @@ const { randomizeDeviceInfo } = require('../utils/randomizerDeviceInfo');
 const { LoginFacebook, VerifyFacebook } = require('../utils/fb');
 const { generateFemaleNames } = require('../utils/fakename/female');
 const { saveAccounts } = require('../utils/saveFB');
+const { restartSinyal } = require('../auto/modem');
 
 //Email services
 const { createGmail, getCodeGmail } = require('../api/gmailotp');
@@ -39,6 +40,7 @@ async function createFB({ udid, appiumPort, systemPort }) {
   const reloadSettings = () => {
       const settings = store.get('settings');
       return {
+        appService: settings.appService,
         changeEmail: settings.changeEmail,
         changeEmailConfig: settings.changeEmailConfig,
         gmailotp_access_key: settings.gmailotp_access_key,
@@ -62,6 +64,7 @@ async function createFB({ udid, appiumPort, systemPort }) {
   let settings = reloadSettings();
   store.onDidChange('settings', () => {settings = reloadSettings();});
   let {
+      appService,
       changeEmail,
       changeEmailConfig,
       gmailotp_access_key,
@@ -136,10 +139,10 @@ async function createFB({ udid, appiumPort, systemPort }) {
   }
 
   //clear app data
-  clearAppData(udid, 'com.facebook.lite');
+  clearAppData(udid, appService);
   await delay(5000);
 
-  await driver.activateApp("com.facebook.lite");
+  await driver.activateApp(appService);
   await delay(35000); // Tunggu 60 detik untuk memastikan aplikasi terbuka
 
   // cari tombol buat akun button
@@ -163,10 +166,10 @@ async function createFB({ udid, appiumPort, systemPort }) {
         break;
       }
       //relog app jika tidak ditemukan
-      const relogFB = await driver.terminateApp("com.facebook.lite");
+      const relogFB = await driver.terminateApp(appService);
       if (relogFB) {
         await delay(5000);
-        await driver.activateApp("com.facebook.lite");
+        await driver.activateApp(appService);
       }
       await delay(25000);
     } catch (e) {
@@ -216,10 +219,10 @@ async function createFB({ udid, appiumPort, systemPort }) {
   //   // await driver.deleteSession(); // Hapus sesi driver
   //   // return;
   //   //relog app jika tidak ditemukan
-  //   const relogFB = await driver.terminateApp("com.facebook.lite");
+  //   const relogFB = await driver.terminateApp(appService);
   //   if (relogFB) {
   //     await delay(5000);
-  //     await driver.activateApp("com.facebook.lite");
+  //     await driver.activateApp(appService);
   //   }
   //   await delay(25000);
   // }
@@ -265,12 +268,12 @@ async function createFB({ udid, appiumPort, systemPort }) {
   await delay(2000);
 
   //Android 12 allow kontak!
-  try {
-    const allowContacts = await driver.$("id:com.android.permissioncontroller:id/permission_deny_button");
-    if (await allowContacts.isExisting()) await allowContacts.click();
-    await delay(2000);
-  } catch (__) {}
-  await delay(15000);
+  // try {
+  //   const allowContacts = await driver.$("id:com.android.permissioncontroller:id/permission_deny_button");
+  //   if (await allowContacts.isExisting()) await allowContacts.click();
+  //   await delay(2000);
+  // } catch (__) {}
+  // await delay(15000);
 
   const el3 = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(0)");
   await el3.addValue(firstName);
@@ -418,12 +421,13 @@ async function createFB({ udid, appiumPort, systemPort }) {
     sendLog(udid, email);
     await delay(5000);
     const inputEmails = await driver.$("class name:android.widget.EditText");
-    if (await inputEmails.isExisting()) await inputEmails.click();
-    await delay(2000);
-    await inputEmails.clearValue();
-    await delay(1000);
+    // if (await inputEmails.isExisting()) await inputEmails.click();
+    // await delay(2000);
+    // await inputEmails.clearValue();
+    if (await inputEmails.isExisting()) await inputEmails.clearValue();
+    await delay(1500);
     await inputEmails.setValue(email);
-    await delay(2000);
+    await delay(2500);
     const el13 = await driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
     await el13.click();
   } catch (error) {
@@ -497,87 +501,81 @@ async function createFB({ udid, appiumPort, systemPort }) {
   await delay(5000);
 
   // Relogin to Facebook
-  // const reloginFB = await driver.terminateApp("com.facebook.lite");
-  // if (reloginFB) {
-  //   await driver.activateApp("com.facebook.lite");
-  //   await delay(20000);
-  // }
-  // await delay(5000);
+  const reloginFB = await driver.terminateApp(appService);
+  if (reloginFB) {
+    await driver.activateApp(appService);
+    await delay(2500);
+  }
+  await delay(15000);
+
+  //FBLite error logout helper...
+  let checkLoginForm;
+  try {
+    await driver.waitUntil(async () => {
+      checkLoginForm = await driver.$("accessibility id:Facebook Lite from Meta");
+      return await checkLoginForm.isExisting();
+    }, { timeout: 10000, timeoutMsg: 'Login form not found' });
+    await delay(5000);
+    const el3 = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(0)");
+    el3.clearValue();
+    await el3.addValue(email);
+    await delay(2000);
+    const el4 = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(1)");
+    el4.clearValue();
+    await el4.addValue(passwordFB);
+    await delay(2000);
+    const el5 = await driver.$("-android uiautomator:new UiSelector().text(\"Login\")");
+    await el5.click();
+    await delay(15000);
+    // relog setelah login..
+    const relogfblite = await driver.terminateApp(appService);
+    if (relogfblite) {
+      await delay(5000);
+      await driver.activateApp(appService);
+    }
+    await delay(15000);
+
+    // Cek apakah sudah login
+    const el6 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.ViewGroup\").instance(7)");
+    if (await el6.isExisting()) await el6.click();
+    await delay(2000);
+    const el7 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.View\").instance(8)");
+    if (await el7.isExisting()) await el7.click();
+    await delay(4000);
+    const el9 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.View\").instance(4)");
+    if (await el9.isExisting()) await el9.click();
+    await delay(7000);
+
+    // Cek apakah ada opsi "Confirm with code instead"
+    // relog 2
+    const relogfblite2 = await driver.terminateApp(appService);
+    if (relogfblite2) {
+      await delay(5000);
+      await driver.activateApp(appService);
+    }
+    await delay(15000);
+  } catch (error) {
+    const relogfblite2 = await driver.terminateApp(appService);
+    if (relogfblite2) {
+      await delay(5000);
+      await driver.activateApp(appService);
+    }
+    await delay(15000);
+  }
+  await delay(5000);
 
   // ====== ✅ Verifikasi akun ====== //
   //new UiSelector().text("Lanjutkan dalam bahasa Inggris (AS)")
-  try {
-    const IstryAgain = await driver.$("-android uiautomator:new UiSelector().text(\"Coba lagi\")");
-    if (await IstryAgain.isExisting()) {
-      await IstryAgain.click();
-      await delay(5000);
-    }
-  } catch (_) {}
-  await delay(5000);
+  // try {
+  //   const IstryAgain = await driver.$("-android uiautomator:new UiSelector().text(\"Coba lagi\")");
+  //   if (await IstryAgain.isExisting()) {
+  //     await IstryAgain.click();
+  //     await delay(5000);
+  //   }
+  // } catch (_) {}
+  // await delay(5000);
 
 // ===== get konfirmasi kode email ===== //
-  // async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = waitCode * 1000, udid) {
-  //   for (let i = 1; i <= maxAttempts; i++) {
-  //     sendLog(udid, `⏳ [${i}/${maxAttempts}] menunggu OTP...`);
-  //      if (mailService === 'gmailotp') {
-  //       const code = await getCodeGmail(order_id, access_key);
-  //       if (code) {
-  //         sendLog(udid, `✅ OTP Gmail diterima: ${code}`);
-  //         await delay(2000);
-  //         return code;
-  //       }
-  //      } else if (mailService === 'hotmail') {
-  //       const code = await getCodeHotmail(email, hotmail_token_refresh, hotmail_client_id);
-  //        if (code) {
-  //          sendLog(udid, `✅ Kode Hotmail diterima: ${code}`);
-  //          await delay(2000);
-  //          return code;
-  //        }
-  //      } else if (mailService === 'kukulu') {
-  //        const code = await getCodeKukulu(email);
-  //         if (code) {
-  //           sendLog(udid, `✅ Kode Kukulu diterima: ${code}`);
-  //           await delay(2000);
-  //           return code;
-  //         }
-  //      } else if (mailService === 'tempmail') {
-  //        const code = await getCodeTempMail(email);
-  //         if (code) {
-  //           sendLog(udid, `✅ Kode TempMail diterima: ${code}`);
-  //           await delay(2000);
-  //           return code;
-  //         }
-  //      } else if (mailService === 'fexplus') {
-  //       const code = await getCodeFexboxMail(email);
-  //       if (code) {
-  //         sendLog(udid, `✅ Kode Fexbox diterima: ${code}`);
-  //         await delay(2000);
-  //         return code;
-  //       }
-  //      } else if (mailService === 'sohibmail') {
-  //        const code = await new Promise((resolve) => {
-  //          emaildewe(email, async (c) => {
-  //            if (c && c.code) {
-  //              sendLog(udid, `✅ Code received: ${c.code}`);
-  //              await delay(2000);
-  //              resolve(c.code);
-  //            }
-  //          });
-  //        });
-  //        if (code) return code;
-  //      } else if (mailService === 'fviainboxes') {
-  //         const code = await getCodeFviaEmail(email);
-  //         if (code) {
-  //           sendLog(udid, `✅ Kode FviaInboxes diterima: ${code}`);
-  //           await delay(2000);
-  //           return code;
-  //         }
-  //       }
-  //     await delay(delayMs);
-  //   }
-  //   throw new Error(`[${maxAttempts}/${maxAttempts}] OTP Gmail timeout.`);
-  // }
-//update kemungkinan bug..
 async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = waitCode * 1000, udid) {
   for (let i = 1; i <= maxAttempts; i++) {
     sendLog(udid, `⏳ [${i}/${maxAttempts}] menunggu OTP...`);
@@ -676,6 +674,15 @@ async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = wai
   //   }
   //   await delay(15000); // Tunggu 15 detik untuk memastikan proxy aktif
   // }
+
+//Confirm with code instead...
+  let Confirmwithcodeinstead;
+  try {
+    Confirmwithcodeinstead = await driver.$("-android uiautomator:new UiSelector().text(\"Confirm with code instead\")");
+    if (await Confirmwithcodeinstead.isExisting()) await Confirmwithcodeinstead.click();
+    await delay(2500);
+  } catch (_) {}
+  await delay(5000);
            
   
 // ====== ✅ Input OTP ke emulator ====== //
@@ -689,42 +696,45 @@ async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = wai
     const nextBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
     if (await nextBtn.isExisting()) await nextBtn.click();
     await delay(5000);
+    const nextBtn2 = await driver.$("-android uiautomator:new UiSelector().text(\"Next\")");
+    if (await nextBtn2.isExisting()) await nextBtn2.click();
+    await delay(7000);
   } catch (_) {}
   await delay(15000);
   sendLog(udid, `Menyimpan akun...`);
   // 💾 Simpan Akun
   if (mailService === 'hotmail') {
-    await saveAccounts(udid, '', hotmail_full_info, passwordFB, 'katana');
+    await saveAccounts(udid, '', hotmail_full_info, passwordFB, appService.split('com.facebook.')[1]);
   } else {
-    await saveAccounts(udid, '', email, passwordFB, 'katana');
+    await saveAccounts(udid, '', email, passwordFB, appService.split('com.facebook.')[1]);
   }
   await delay(5000);
-  await driver.terminateApp('com.facebook.lite'); // Hentikan aplikasi Facebook
+  await driver.terminateApp(appService); // Hentikan aplikasi Facebook
   await delay(5000);
-  clearAppData(udid, 'com.facebook.lite'); // Hapus data aplikasi Facebook
+  clearAppData(udid, appService); // Hapus data aplikasi Facebook
   await delay(5000);
   await driver.deleteSession(); // Hapus sesi driver
   return `✅ FB berhasil dibuat: ${email}`;
 };
 
 // Verify Facebook account
-async function verifyFBkatana({ udid, appiumPort, systemPort }) {
+async function verifyFB({ udid, appiumPort, systemPort }) {
   let driver;
   let email, gmail_order_id;
   await delay(2000);
-  //sendLog(udid, `Random android...`);
-  //randomizeDeviceInfo(udid);
-  //await delay(2000);
-  //Initial settings
+
+// ============= Get settings! ============= //
   const store = new Store();
   const reloadSettings = () => {
       const settings = store.get('settings');
       return {
+        appService: settings.appService,
         changeEmail: settings.changeEmail,
         changeEmailConfig: settings.changeEmailConfig,
         gmailotp_access_key: settings.gmailotp_access_key,
         mailService: settings.mailService,
         sohibMailDomain: settings.sohibMailDomain,
+        fviainboxesDomain: settings.fviainboxesDomain,
         kukuluDomain: settings.kukuluDomain,
         hotmailConfig: settings.hotmailConfig,
         hotmailApiKey: settings.hotmailApiKey,
@@ -739,19 +749,17 @@ async function verifyFBkatana({ udid, appiumPort, systemPort }) {
         passwordFB: settings.passwordFB,
       };
   };
-  // Reload settings!
   let settings = reloadSettings();
-  store.onDidChange('settings', () => {
-      settings = reloadSettings();
-  });
-  //console.log('Reloaded settings:', settings);
+  store.onDidChange('settings', () => {settings = reloadSettings();});
   let {
+      appService,
       changeEmail,
       changeEmailConfig,
       gmailotp_access_key,
       mailService,
       kukuluDomain,
       sohibMailDomain,
+      fviainboxesDomain,
       hotmailConfig,
       hotmailApiKey,
       Services_Number,
@@ -765,6 +773,7 @@ async function verifyFBkatana({ udid, appiumPort, systemPort }) {
       passwordFB
   } = settings;
   await delay(1500);
+// ============= Get settings! ============= //
 
   const caps = {
     "appium:automationName": "uiautomator2",
@@ -847,7 +856,7 @@ async function verifyFBkatana({ udid, appiumPort, systemPort }) {
   };
 
   //clear app data
-  clearAppData(udid, 'com.facebook.lite');
+  clearAppData(udid, appService);
   await delay(5000);
 
   // //proxy
@@ -891,14 +900,14 @@ async function verifyFBkatana({ udid, appiumPort, systemPort }) {
 // =========== end get account noverify from servers =============== //
   
 // =========== open FB KATANA =============== //
-  await driver.activateApp("com.facebook.lite");
+  await driver.activateApp(appService);
   await delay(10000);
 
   //clear app data and relaunch app
-  const relogFB = await driver.terminateApp("com.facebook.lite");
+  const relogFB = await driver.terminateApp(appService);
   if (relogFB) {
     await delay(5000);
-    await driver.activateApp("com.facebook.lite");
+    await driver.activateApp(appService);
   }
   await delay(20000);
 
@@ -966,146 +975,272 @@ async function verifyFBkatana({ udid, appiumPort, systemPort }) {
     await delay(15000);
 // =========== end LOGIN FB KATANA =============== //
 
-//relog app
-  const relaunch = await driver.terminateApp("com.facebook.lite");
-  if (relaunch) {
-    await delay(5000);
-    await driver.activateApp("com.facebook.lite");
-    await delay(25000);
-  }
-
-// =========== CHECK IF ALREADY LOGGED IN =============== //
-  //selectors element
-  const selectors = [
-    { desc: "Lanjut", type: "description" },
-    { desc: "Saya tidak mendapatkan kode", type: "description" },
-    { desc: "Kirim kode melalui SMS", type: "description" },
-    { desc: "Kirim kode melalui WhatsApp", type: "description" },
-    { desc: "Saya tidak mendapatkan kode", type: "description" },
-    { desc: "Lanjut", type: "text" },
-    { desc: "Ubah email", type: "text" },
-    { desc: "Konfirmasi melalui email", type: "text" },
-    { desc: "Daftar dengan email", type: "text" }
-  ];
-  // check login success?
-  let foundSelector = false;
-  for (const sel of selectors) {
-    try {
-      await driver.waitUntil(async () => {
-        let el;
-        if (sel.type === "description") {
-          el = await driver.$(`-android uiautomator:new UiSelector().description("${sel.desc}")`);
-        } else {
-          el = await driver.$(`-android uiautomator:new UiSelector().text("${sel.desc}")`);
-        }
-        return await el.isExisting();
-      }, { timeout: 5000, timeoutMsg: `Selector "${sel.desc}" not found in time` });
-      foundSelector = true;
-      break; // Stop at the first found selector
-    } catch (_) {}
-  }
-  if (!foundSelector) {
-    try {
-      //relog app
-      const closeAppThis = await driver.terminateApp("com.facebook.lite");
-      if (closeAppThis) {
-        await driver.activateApp("com.facebook.lite");
-      }
-      await delay(25000);
-      //Check Login again to ensure we are logged in
-      const lookInput = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(0)");
-      if (await lookInput.isExisting()) {
-        await lookInput.clearValue();
-        await delay(500);
-        await loginFB(uid, pass);
-      }
-    } catch (_) {}
-  }
-  await delay(5000);
-  for (const sel of selectors) {
-    let el;
-    try {
-      if (sel.type === "description") {
-        el = await driver.$(`-android uiautomator:new UiSelector().description("${sel.desc}")`);
-      } else {
-        el = await driver.$(`-android uiautomator:new UiSelector().text("${sel.desc}")`);
-      }
-      if (await el.isExisting()) {
-        await el.click();
-        await delay(2500);
-      }
-    } catch (e) {
-      // Ignore if not found, continue to next
-      //send failed accounts to server
-      await axios.post(COOKIE_UPLOAD_URL, { cokis: `${uid}|${pass}`, userId: 'gagalnoverif' });
-      await delay(5000);
-      await driver.deleteSession(); // Hapus sesi driver
-      return;
-    }
-  }
-  await delay(5000);
-// =========== CHECK IF ALREADY LOGGED IN =============== //
-  
-//generate gmail and change email!
+  // Check if the login was successful
   try {
-    const isEmailOpened = await driver.$("accessibility id:Email");
-    if (!(await isEmailOpened.isExisting())) {
+    if (appService === 'com.facebook.katana') {
+      //relog app
+        const relaunch = await driver.terminateApp(appService);
+        if (relaunch) {
+          await delay(5000);
+          await driver.activateApp(appService);
+          await delay(25000);
+        }
+
+      // =========== CHECK IF ALREADY LOGGED IN =============== //
+        //selectors element
+        const selectors = [
+          { desc: "Lanjut", type: "description" },
+          { desc: "Saya tidak mendapatkan kode", type: "description" },
+          { desc: "Kirim kode melalui SMS", type: "description" },
+          { desc: "Kirim kode melalui WhatsApp", type: "description" },
+          { desc: "Saya tidak mendapatkan kode", type: "description" },
+          { desc: "Lanjut", type: "text" },
+          { desc: "Ubah email", type: "text" },
+          { desc: "Konfirmasi melalui email", type: "text" },
+          { desc: "Daftar dengan email", type: "text" }
+        ];
+        // check login success?
+        let foundSelector = false;
+        for (const sel of selectors) {
+          try {
+            await driver.waitUntil(async () => {
+              let el;
+              if (sel.type === "description") {
+                el = await driver.$(`-android uiautomator:new UiSelector().description("${sel.desc}")`);
+              } else {
+                el = await driver.$(`-android uiautomator:new UiSelector().text("${sel.desc}")`);
+              }
+              return await el.isExisting();
+            }, { timeout: 5000, timeoutMsg: `Selector "${sel.desc}" not found in time` });
+            foundSelector = true;
+            break; // Stop at the first found selector
+          } catch (_) {}
+        }
+        if (!foundSelector) {
+          try {
+            //relog app
+            const closeAppThis = await driver.terminateApp(appService);
+            if (closeAppThis) {
+              await driver.activateApp(appService);
+            }
+            await delay(25000);
+            //Check Login again to ensure we are logged in
+            const lookInput = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(0)");
+            if (await lookInput.isExisting()) {
+              await lookInput.clearValue();
+              await delay(500);
+              await loginFB(uid, pass);
+            }
+          } catch (_) {}
+        }
+        await delay(5000);
+        for (const sel of selectors) {
+          let el;
+          try {
+            if (sel.type === "description") {
+              el = await driver.$(`-android uiautomator:new UiSelector().description("${sel.desc}")`);
+            } else {
+              el = await driver.$(`-android uiautomator:new UiSelector().text("${sel.desc}")`);
+            }
+            if (await el.isExisting()) {
+              await el.click();
+              await delay(2500);
+            }
+          } catch (e) {
+            // Ignore if not found, continue to next
+            //send failed accounts to server
+            await axios.post(COOKIE_UPLOAD_URL, { cokis: `${uid}|${pass}`, userId: 'gagalnoverif' });
+            await delay(5000);
+            await driver.deleteSession(); // Hapus sesi driver
+            return;
+          }
+        }
+        await delay(5000);
+      // =========== CHECK IF ALREADY LOGGED IN =============== //
+    } else if (appService === 'com.facebook.lite') {
+      // Cek apakah sudah login
+      const el9 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.View\").instance(4)");
+      if (await el9.isExisting()) {
+        await el9.click();
+        await delay(5000);
+      } else {
+        const el10 = await driver.$("xpath://android.widget.FrameLayout[@resource-id=\"com.facebook.lite:id/main_layout\"]/android.widget.FrameLayout/android.view.ViewGroup[3]/android.view.ViewGroup[1]/android.view.View");
+        if (await el10.isExisting()) {
+          await el10.click();
+          await delay(5000);
+        }
+      }
+      await delay(5000);
+
+      // Cek apakah ada opsi "Confirm with code instead"
+      const confirmWithCode = await driver.$("-android uiautomator:new UiSelector().text(\"Confirm with code instead\")");
+      if (await confirmWithCode.isExisting()) {
+        await confirmWithCode.click();
+        await delay(5000);
+      }
+      await delay(15000);
+
+      // Cek apakah ada opsi Signup with email
+      let signupWithEmail;
+      signupWithEmail = await driver.$("-android uiautomator:new UiSelector().text(\"Sign up with email\")");
+      if (await signupWithEmail.isExisting()) {
+        await signupWithEmail.click();
+        await delay(5000);
+      } else {
+      const signupWithEmail = await driver.$("-android uiautomator:new UiSelector().text(\"Daftar dengan email\")");
+      if (await signupWithEmail.isExisting()) {
+        await signupWithEmail.click();
+        await delay(5000);
+      }
+    }
+    await delay(15000);
+  }
+  } catch (_) {}
+  await delay(5000);
+  
+// ========== Input EMAIL ========== //
+  //helper hotmail services;
+  let hotmail_token_refresh, hotmail_client_id, hotmail_full_info;
+  try {
+    const elementEmailFound = await driver.$("accessibility id:Email");
+    if (!(await elementEmailFound.isExisting())) {
       sendLog(udid, `❌ Email field not found!`);
       //send failed accounts to server
-      await axios.post(COOKIE_UPLOAD_URL, { cokis: `${uid}|${pass}`, userId: 'gagalnoverif' });
+      await axios.post(COOKIE_UPLOAD_URL, { cokis: `${firstName}|${lastName}`, userId: 'gagalnoverif' });
       await delay(5000);
       await driver.deleteSession(); // Hapus sesi driver
       return;
       //throw new Error('❌ Input email field not found!');
     }
-    const clickEmailFiels = await driver.$("class name:android.widget.EditText");
-    if (await clickEmailFiels.isExisting()) await clickEmailFiels.click();
     await delay(2000);
-    const inputEmail = await driver.$("class name:android.widget.EditText");
-    if (await inputEmail.isExisting()) {
-      //get email from api services
-      const result = await createGmail(gmailotp_access_key);
-      if (result === null) {
-        //send failed accounts to server
-        await axios.post(COOKIE_UPLOAD_URL, { cokis: `${uid}|${pass}`, userId: 'gagalnoverif' });
-        sendLog(udid, `❌ Stok gmail kosong!`);
-        await delay(5000);
-        await driver.deleteSession(); // Hapus sesi driver
-        return;
+    if (mailService === 'gmailotp') {
+      const getGmail = await createGmail(gmailotp_access_key);
+      if (getGmail === null) {
+        sendLog(udid, `❌ stok gmail kosong!`);
         //throw new Error('Failed to get email from Gmail OTP');
+        return;
       } else {
-        email = result.email;
-        gmail_order_id = result.order_id;
+        email = getGmail.email;
+        gmail_order_id = getGmail.order_id;
       }
-      //sendLog(udid, `📩 Email: ${email}`);
-      sendLog(udid, email);
-      await inputEmail.clearValue();
-      await inputEmail.setValue(email);
+    } else if (mailService === 'sohibmail') {
+          email = `${whatIsMyNames[0].email}@${sohibMailDomain}`;
+    } else if (mailService === 'hotmail') {
+      //hotmail
+      const getHotmailInfo = await createHotmail(hotmailConfig, hotmailApiKey);
+      email = getHotmailInfo.email;
+      hotmail_token_refresh = getHotmailInfo.refresh_token;
+      hotmail_client_id = getHotmailInfo.client_id;
+      hotmail_full_info = getHotmailInfo.data;
+    } else if (mailService === 'fexplus') {
+      email = await createFexboxMail();
+    } else if (mailService === 'tempmail') {
+      email = await createTempMail();
+    } else if (mailService === 'kukulu') {
+      email = await createKukulu(whatIsMyNames[0].email, '@' + kukuluDomain);
+    } else if (mailService === 'fviainboxes') {
+      if (fviainboxesDomain === 'random') {
+        email = await createFviaEmail(true);
+      } else {
+        email = await createFviaEmail(false, fviainboxesDomain);
+      }
     }
-    const nextBtnEmail = await driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
-    if (await nextBtnEmail.isExisting()) await nextBtnEmail.click();
-  } catch (_) {}
-  await delay(8000);
+    sendLog(udid, email);
+    await delay(5000);
+    const inputEmails = await driver.$("class name:android.widget.EditText");
+    if (await inputEmails.isExisting()) await inputEmails.click();
+    await delay(2000);
+    await inputEmails.clearValue();
+    await delay(1000);
+    await inputEmails.setValue(email);
+    await delay(2000);
+    const nextBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
+    if (await nextBtn.isExisting()) await nextBtn.click();
+    await delay(2000);
+    const nextBtn2 = await driver.$("-android uiautomator:new UiSelector().text(\"Next\")");
+    if (await nextBtn2.isExisting()) await nextBtn2.click();
+    await delay(4000);
+  } catch (error) {
+    return;
+  }
+  await delay(5000);
 
-// Dapatkan kode verifikasi dari Gmail
-  //sendLog(udid, `Mendapatkan kode verifikasi dari Gmail...`);
-  async function waitForGmailCode(order_id, access_key, maxAttempts = 15, delayMs = waitCode * 1000, udid) {
-    for (let i = 1; i <= maxAttempts; i++) {
-      sendLog(udid, `⏳ [${i}/${maxAttempts}] menunggu OTP Gmail...`);
-      const code = await getCodeGmail(order_id, access_key);
+  // ========== Reset IP untuk verifikasi ========== //
+  await restartSinyal();
+  await delay(15000);
+
+// ===== get konfirmasi kode email ===== //
+async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = waitCode * 1000, udid) {
+  for (let i = 1; i <= maxAttempts; i++) {
+    sendLog(udid, `⏳ [${i}/${maxAttempts}] menunggu OTP...`);
+    try {
+      let code = null;
+
+      if (mailService === 'gmailotp') {
+        code = await getCodeGmail(order_id, access_key);
+        if (code) sendLog(udid, `✅ OTP Gmail diterima: ${code}`);
+
+      } else if (mailService === 'hotmail') {
+        code = await getCodeHotmail(email, hotmail_token_refresh, hotmail_client_id);
+        if (code) sendLog(udid, `✅ Kode Hotmail diterima: ${code}`);
+
+      } else if (mailService === 'kukulu') {
+        code = await getCodeKukulu(email);
+        if (code) sendLog(udid, `✅ Kode Kukulu diterima: ${code}`);
+
+      } else if (mailService === 'tempmail') {
+        code = await getCodeTempMail(email);
+        if (code) sendLog(udid, `✅ Kode TempMail diterima: ${code}`);
+
+      } else if (mailService === 'fexplus') {
+        code = await getCodeFexboxMail(email);
+        if (code) sendLog(udid, `✅ Kode Fexbox diterima: ${code}`);
+
+      } else if (mailService === 'sohibmail') {
+        // Dibatasi timeout max 30 detik untuk menghindari hang
+        code = await new Promise((resolve, reject) => {
+          // let timeout = setTimeout(() => {
+          //   sendLog(udid, `⚠️ Sohibmail timeout.`);
+          //   resolve(null);
+          // }, 7000);
+
+          emaildewe(email, async (c) => {
+            if (c && c.code) {
+              clearTimeout(timeout);
+              sendLog(udid, `✅ Kode Sohibmail diterima: ${c.code}`);
+              await delay(2000);
+              resolve(c.code);
+            } else if (c && c.code === null) {
+              //sendLog(udid, `⚠️ Kode Sohibmail belum ditemukan.`);
+              resolve(null);
+            }
+          });
+        });
+
+      } else if (mailService === 'fviainboxes') {
+        code = await getCodeFviaEmail(email);
+        if (code) sendLog(udid, `✅ Kode FviaInboxes diterima: ${code}`);
+      }
+
       if (code) {
-        sendLog(udid, `✅ OTP Gmail diterima: ${code}`);
         await delay(2000);
         return code;
       }
-      await delay(delayMs);
+
+    } catch (err) {
+      sendLog(udid, `⚠️ Error saat cek OTP: ${err.message}`);
     }
-    throw new Error(`[${maxAttempts}/${maxAttempts}] OTP Gmail timeout.`);
+
+    await delay(delayMs);
   }
-  // Cek apakah ada kode verifikasi di Gmail
+
+  throw new Error(`[${maxAttempts}/${maxAttempts}] OTP ${mailService} timeout.`);
+}
+
+// ===== Cek kode verifikasi ===== //
   let code;
   try {
-    code = await waitForGmailCode(gmail_order_id, gmailotp_access_key, 15, waitCode * 1000, udid);
+    code = await waitForCode(gmail_order_id, gmailotp_access_key, 5, waitCode * 1000, udid);
   } catch (err) {
     sendLog(udid, `❌ ${err.message}`);
     throw err;
@@ -1119,18 +1254,26 @@ async function verifyFBkatana({ udid, appiumPort, systemPort }) {
       await inputCode.clearValue();
       await inputCode.setValue(code);
     }
+    await delay(15000); // Tunggu 15 detik sebelum mengonfirmasi
     const nextBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
     if (await nextBtn.isExisting()) await nextBtn.click();
-    await delay(5000);
+    await delay(2000);
+    const nextBtn2 = await driver.$("-android uiautomator:new UiSelector().text(\"Next\")");
+    if (await nextBtn2.isExisting()) await nextBtn2.click();
+    await delay(4000);
   } catch (_) {}
   await delay(15000);
   sendLog(udid, `Menyimpan akun...`);
   // 💾 Simpan akun
-  await saveAccounts(udid, '', email, pass, 'katana');
+  if (mailService === 'hotmail') {
+    await saveAccounts(udid, '', hotmail_full_info, pass, appService.split('com.facebook.')[1]);
+  } else {
+    await saveAccounts(udid, '', email, pass, appService.split('com.facebook.')[1]);
+  }
   await delay(5000);
-  await driver.terminateApp('com.facebook.lite'); // Hentikan aplikasi Facebook
+  await driver.terminateApp(appService); // Hentikan aplikasi Facebook
   await delay(5000);
-  clearAppData(udid, 'com.facebook.lite'); // Hapus data aplikasi Facebook
+  clearAppData(udid, appService); // Hapus data aplikasi Facebook
   await delay(5000);
   await driver.deleteSession(); // Hapus sesi driver
   return `✅ FB berhasil dibuat: ${email}`;
@@ -1298,9 +1441,9 @@ async function createFB_appium({ udid, appiumPort, systemPort }) {
 
     // clear app data
     // await delay(5000);
-    // clearAppData (udid, 'com.facebook.lite');
+    // clearAppData (udid, appService);
     // await delay(5000);
-    clearAppData(udid, 'com.facebook.lite');
+    clearAppData(udid, appService);
     await delay(5000);
 
     //set proxy untuk daftar akun
@@ -1325,7 +1468,7 @@ async function createFB_appium({ udid, appiumPort, systemPort }) {
     // await randomizeDeviceInfo(udid);
     // await delay(2000);
 
-    //await driver.removeApp('com.facebook.lite');
+    //await driver.removeApp(appService);
 
     //const findAPK = path.join(__dirname, 'apk');
     //await driver.installApp(path.join(findAPK, 'lite.apk'));
@@ -1341,8 +1484,8 @@ async function createFB_appium({ udid, appiumPort, systemPort }) {
 
     // =========== CHECK IF ALREADY OPEN =============== //
     sendLog(udid, `Membuka aplikasi facebook...`);
-    await driver.activateApp('com.facebook.lite');
-    //openApp(udid, 'com.facebook.lite');
+    await driver.activateApp(appService);
+    //openApp(udid, appService);
     await delay(15000);
 
     const reg = await driver.$("-android uiautomator:new UiSelector().text(\"Buat akun baru\")");
@@ -1786,15 +1929,15 @@ async function createFB_appium({ udid, appiumPort, systemPort }) {
     }
 
     // =========== VERIFY FB KATANA =============== //
-    clearAppData(udid, 'com.facebook.lite');
+    clearAppData(udid, appService);
     await delay(5000);
-    await driver.activateApp('com.facebook.lite');
+    await driver.activateApp(appService);
     await delay(15000);
 
     //relogfb
-    closeApp(udid, 'com.facebook.lite');
+    closeApp(udid, appService);
     await delay(5000);
-    await driver.activateApp('com.facebook.lite');
+    await driver.activateApp(appService);
     await delay(15000);
 
     // =========== LOGIN FB KATANA =============== //
@@ -1809,9 +1952,9 @@ async function createFB_appium({ udid, appiumPort, systemPort }) {
     await delay(15000);
 
     //relogfb 2
-    closeApp(udid, 'com.facebook.lite');
+    closeApp(udid, appService);
     await delay(5000);
-    await driver.activateApp('com.facebook.lite');
+    await driver.activateApp(appService);
     await delay(15000);
     
     // clickDevice(udid, 360, 710); // Click Login
@@ -1861,7 +2004,7 @@ async function createFB_appium({ udid, appiumPort, systemPort }) {
         //Save akun!
         await saveAccounts(udid, '', use5sim ? fivesim_number : email, 'katana');
         await delay(15000);
-        await driver.removeApp('com.facebook.lite');
+        await driver.removeApp(appService);
         await delay(5000);
         //end session!
         await driver.deleteSession();
@@ -2032,28 +2175,63 @@ async function createFB_appium({ udid, appiumPort, systemPort }) {
 
 //getcokis all manual
 async function getAllCokisFB({ udid, appiumPort, systemPort }) {
-  
-  // const caps = {
-  //   platformName: "Android",
-  //   "appium:udid": udid,
-  //   "appium:automationName": "UiAutomator2",
-  //   "appium:noReset": false,
-  //   "appium:dontStopAppOnReset": true,
-  //   "appium:systemPort": systemPort
-  // };
-
-  // const driver = await remote({
-  //   protocol: 'http',
-  //   hostname: '127.0.0.1',
-  //   port: appiumPort,
-  //   path: '/',
-  //   capabilities: caps
-  // });
-
   try {
+    // ============= Get settings! ============= //
+  const store = new Store();
+  const reloadSettings = () => {
+      const settings = store.get('settings');
+      return {
+        appService: settings.appService,
+        changeEmail: settings.changeEmail,
+        changeEmailConfig: settings.changeEmailConfig,
+        gmailotp_access_key: settings.gmailotp_access_key,
+        mailService: settings.mailService,
+        sohibMailDomain: settings.sohibMailDomain,
+        fviainboxesDomain: settings.fviainboxesDomain,
+        kukuluDomain: settings.kukuluDomain,
+        hotmailConfig: settings.hotmailConfig,
+        hotmailApiKey: settings.hotmailApiKey,
+        Services_Number: settings.Services_Number,
+        use5sim: settings.use5sim,
+        use5sim_country: settings.use5sim_country,
+        use5sim_operator: settings.use5sim_operator,
+        vaksms_country: settings.vaksms_country,
+        vaksms_operator: settings.vaksms_operator,
+        proxy: settings.proxy,
+        waitCode: settings.waitCode,
+        passwordFB: settings.passwordFB,
+      };
+  };
+  let settings = reloadSettings();
+  store.onDidChange('settings', () => {settings = reloadSettings();});
+  let {
+      appService,
+      changeEmail,
+      changeEmailConfig,
+      gmailotp_access_key,
+      mailService,
+      kukuluDomain,
+      sohibMailDomain,
+      fviainboxesDomain,
+      hotmailConfig,
+      hotmailApiKey,
+      Services_Number,
+      use5sim,
+      use5sim_country,
+      use5sim_operator,
+      vaksms_country,
+      vaksms_operator,
+      proxy,
+      waitCode,
+      passwordFB
+  } = settings;
+  await delay(1500);
+// ============= Get settings! ============= //
+    await delay(2000);
+    await saveAccounts(udid, '', '', 'Diablo2026', appService.split('com.facebook.')[1]);
     await delay(5000);
-    await saveAccounts(udid, '', '', 'Diablo2026', 'katana');
-    await delay(5000);
+    clearAppData(udid, appService);
+    await delay(7000);
   } catch (err) {
     console.error('❌ Error:', err.message);
     //await driver.deleteSession();
@@ -2061,4 +2239,4 @@ async function getAllCokisFB({ udid, appiumPort, systemPort }) {
   }
 }
 
-module.exports = { createFB, getAllCokisFB, verifyFBkatana };
+module.exports = { createFB, getAllCokisFB, verifyFB };

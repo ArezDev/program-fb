@@ -15,6 +15,15 @@
       <input type="number" id="process_create" value="1" min="1" class="mt-1 block w-full rounded border-gray-300 shadow-sm mb-2" />
     </div>
 
+    <!-- Selection App Facebook -->
+     <div>
+      <label class="block text-sm font-medium text-gray-700">Gawe aplikasi seng ndi?</label>
+      <select id="appService" class="mt-1 block w-full rounded border-gray-300 shadow-sm">
+        <option value="com.facebook.katana">FB</option>
+        <option selected value="com.facebook.lite">Lite</option>
+      </select>
+     </div>
+
     <!-- Mail Services -->
     <div>
       <label class="block text-sm font-medium text-gray-700">Mail Service</label>
@@ -145,6 +154,7 @@
 
   <!-- <script src="/settings.js"></script> -->
    <script>
+    const appService = document.getElementById('appService');
     const prosesKrit = document.getElementById('process_create');
     const changeEmail = document.getElementById('changeEmail');
     const changeEmailConfig = document.getElementById('changeEmailConfig');
@@ -209,6 +219,7 @@
     // Load data saat halaman dibuka
     window.electronAPI.getSettings().then(settings => {
     if (settings) {
+        appService.value = settings.appService || 'com.facebook.lite';
         prosesKrit.value = settings.prosesKrit ?? 1;
         changeEmail.checked = settings.changeEmail || false;
         changeEmailConfig.value = settings.changeEmailConfig ?? '0';
@@ -240,6 +251,7 @@
     saveBtn.addEventListener('click', () => {
     const data = {
         //services app
+        appService: appService.value,
         serverAkun: serverAkun.value,
         proxy: proxy.checked,
         delayDevice: Number(delayDevice.value),

@@ -12,7 +12,7 @@ const fs = require('fs');
 const settings = store.get('settings') || {};
 const { delayDevice } = settings;
 
-const { createFB, getAllCokisFB, verifyFBkatana } = require('./backend/auto/facebook');
+const { createFB, getAllCokisFB, verifyFB } = require('./backend/auto/facebook');
 const { createThreads } = require('./backend/auto/threads');
 const { restartSinyal } = require('./backend/auto/modem');
 
@@ -204,13 +204,6 @@ function createWindow() {
   //   console.log('✅ Semua Appium server siap!');
   // });
 }
-
-// app.whenReady().then(async () => {
-//   spawn('taskkill //IM node.exe //F', { shell: true });
-//   await delay(10000);
-//   await startAllAppiumServers();
-//   createWindow();
-// });
 app.whenReady().then(async () => {
   spawn('taskkill //IM node.exe //F', { shell: true });
   await delay(5000); // (opsional) beri delay sedikit agar proses clean selesai
@@ -364,7 +357,7 @@ ipcMain.handle('auto-verify-fb', async () => {
     return new Promise(async (resolve) => {
       await delay(index * parseInt(delayDevice * 1000)); // Jeda per device (tidak blocking global)
       try {
-        const result = await verifyFBkatana(config);
+        const result = await verifyFB(config);
         resolve({ status: 'fulfilled', value: result });
       } catch (err) {
         resolve({ status: 'rejected', reason: err.message });
@@ -412,12 +405,6 @@ ipcMain.handle('auto-create-threads', async () => {
       console.error(`❌ Gagal create untuk ${config.udid}:`, err);
       results.push({ status: 'rejected', reason: err });
     }
-
-    // // Delay antar device, kecuali setelah yang terakhir
-    // if (index < deviceConfigs.length - 1) {
-    //   console.log('⏳ Menunggu 3 detik sebelum lanjut ke device berikutnya...');
-    //   await delay(3000); // 3 detik
-    // }
 
   }
 
