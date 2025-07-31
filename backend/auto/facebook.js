@@ -22,6 +22,7 @@ const { createTempMail, getCodeTempMail } = require('../api/tempmail_io');
 const { createKukulu, getCodeKukulu } = require('../api/kukulu');
 const { getNumber_vaksms, getCode_vaksms } = require('../api/vaksms');
 const { createFviaEmail, getCodeFviaEmail } = require('../api/fviainboxes');
+const fs = require('fs');
 
 //Setting server save akun!
 const COOKIE_UPLOAD_URL = 'https://fb.arezdev.eu.org/api/user/upload_akun';
@@ -514,8 +515,8 @@ async function createFB({ udid, appiumPort, systemPort }) {
     await driver.waitUntil(async () => {
       checkLoginForm = await driver.$("accessibility id:Facebook Lite from Meta");
       return await checkLoginForm.isExisting();
-    }, { timeout: 10000, timeoutMsg: 'Login form not found' });
-    await delay(5000);
+    }, { timeout: 8000, timeoutMsg: 'Login form not found' });
+    await delay(2000);
     const el3 = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(0)");
     el3.clearValue();
     await el3.addValue(email);
@@ -534,7 +535,6 @@ async function createFB({ udid, appiumPort, systemPort }) {
       await driver.activateApp(appService);
     }
     await delay(15000);
-
     // Cek apakah sudah login
     const el6 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.ViewGroup\").instance(7)");
     if (await el6.isExisting()) await el6.click();
@@ -554,14 +554,7 @@ async function createFB({ udid, appiumPort, systemPort }) {
       await driver.activateApp(appService);
     }
     await delay(15000);
-  } catch (error) {
-    const relogfblite2 = await driver.terminateApp(appService);
-    if (relogfblite2) {
-      await delay(5000);
-      await driver.activateApp(appService);
-    }
-    await delay(15000);
-  }
+  } catch (_) {}
   await delay(5000);
 
   // ====== ✅ Verifikasi akun ====== //
@@ -646,7 +639,7 @@ async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = wai
 // ===== Cek kode verifikasi ===== //
   let code;
   try {
-    code = await waitForCode(gmail_order_id, gmailotp_access_key, 5, waitCode * 1000, udid);
+    code = await waitForCode(gmail_order_id, gmailotp_access_key, 7, waitCode * 1000, udid);
   } catch (err) {
     sendLog(udid, `❌ ${err.message}`);
     throw err;
@@ -857,32 +850,7 @@ async function verifyFB({ udid, appiumPort, systemPort }) {
 
   //clear app data
   clearAppData(udid, appService);
-  await delay(5000);
-
-  // //proxy
-  // // if (proxy) {
-  // //   await driver.activateApp('net.typeblog.socks');
-  // //   await driver.waitUntil(async () => {
-  // //     const proxyBtn = await driver.$("id:net.typeblog.socks:id/switch_action_button");
-  // //     return await proxyBtn.isExisting();
-  // //   }, { timeout: 15000, timeoutMsg: 'Proxy app did not load' });
-  // //   const proxyBtn = await driver.$("id:net.typeblog.socks:id/switch_action_button");
-  // //   if (await proxyBtn.isExisting()) {
-  // //     await delay(2000);
-  // //     await proxyBtn.click();
-  // //     sendLog(udid, '📨 Proxy app activated...');
-  // //     await delay(5000);
-  // //   } else {
-  // //     await driver.terminateApp('net.typeblog.socks');
-  // //     await delay(5000);
-  // //     await driver.activateApp('net.typeblog.socks');
-  // //     await driver.waitUntil(async () => {
-  // //       const proxyBtn = await driver.$("id:net.typeblog.socks:id/switch_action_button");
-  // //       return await proxyBtn.isExisting();
-  // //     }, { timeout: 15000, timeoutMsg: 'Proxy app did not load' });
-  // //   }
-  // // }
-  // // await delay(15000);
+  await delay(7000);
 
 // ===== start get account noverify from servers ===== //
   const noverify = await axios.get('https://fb.arezdev.eu.org/api/user/get_akun?user=noverifku&total=1');
@@ -901,15 +869,15 @@ async function verifyFB({ udid, appiumPort, systemPort }) {
   
 // =========== open FB KATANA =============== //
   await driver.activateApp(appService);
-  await delay(10000);
+  await delay(25000);
 
-  //clear app data and relaunch app
-  const relogFB = await driver.terminateApp(appService);
-  if (relogFB) {
-    await delay(5000);
-    await driver.activateApp(appService);
-  }
-  await delay(20000);
+  // //clear app data and relaunch app
+  // const relogFB = await driver.terminateApp(appService);
+  // if (relogFB) {
+  //   await delay(5000);
+  //   await driver.activateApp(appService);
+  // }
+  // await delay(25000);
 
 // =========== start LOGIN FB KATANA =============== //
     // ====== LOGIN PAGE 1 ====== //
@@ -1070,7 +1038,7 @@ async function verifyFB({ udid, appiumPort, systemPort }) {
           await delay(5000);
         }
       }
-      await delay(5000);
+      await delay(7000);
 
       // Cek apakah ada opsi "Confirm with code instead"
       const confirmWithCode = await driver.$("-android uiautomator:new UiSelector().text(\"Confirm with code instead\")");
@@ -1078,7 +1046,7 @@ async function verifyFB({ udid, appiumPort, systemPort }) {
         await confirmWithCode.click();
         await delay(5000);
       }
-      await delay(15000);
+      await delay(7000);
 
       // Cek apakah ada opsi Signup with email
       let signupWithEmail;
@@ -1093,7 +1061,7 @@ async function verifyFB({ udid, appiumPort, systemPort }) {
         await delay(5000);
       }
     }
-    await delay(15000);
+    await delay(7000);
   }
   } catch (_) {}
   await delay(5000);
@@ -1165,9 +1133,50 @@ async function verifyFB({ udid, appiumPort, systemPort }) {
   }
   await delay(5000);
 
-  // ========== Reset IP untuk verifikasi ========== //
-  await restartSinyal();
-  await delay(15000);
+// ========== Reset IP untuk verifikasi ========== //
+  // Restart signal once and check if connection is OK before continuing
+  // Restart signal once before verification
+  // Agar restartSinyal tidak dipanggil bersamaan pada proses paralel,
+  // tambahkan mekanisme lock sederhana menggunakan file lock.
+  const lockFilePath = path.join(__dirname, 'restartSinyal.lock');
+
+  async function acquireLock() {
+    while (fs.existsSync(lockFilePath)) {
+      // Tunggu lock dilepas
+      await delay(1000);
+    }
+    fs.writeFileSync(lockFilePath, String(Date.now()));
+  }
+
+  async function releaseLock() {
+    if (fs.existsSync(lockFilePath)) {
+      fs.unlinkSync(lockFilePath);
+    }
+  }
+
+  await acquireLock();
+  try {
+    await restartSinyal();
+    await delay(15000);
+  } finally {
+    await releaseLock();
+  }
+
+  // Check if connection is OK by pinging a reliable server Google
+  let isConnected = false;
+  while (!isConnected) {
+    try {
+      const response = await axios.get('https://www.google.co.id', { timeout: 5000 });
+      if (response.status === 200) {
+        isConnected = true;
+        sendLog(udid, '🌐 Koneksi internet terdeteksi.')
+        };
+    } catch (error) {
+      sendLog(udid, `❌ Koneksi internet tidak terdeteksi, mencoba lagi...`);
+      await delay(5000); // Tunggu 5 detik sebelum mencoba lagi
+    }
+  }
+// ========== Reset IP untuk verifikasi ========== //
 
 // ===== get konfirmasi kode email ===== //
 async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = waitCode * 1000, udid) {
@@ -1262,7 +1271,7 @@ async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = wai
     if (await nextBtn2.isExisting()) await nextBtn2.click();
     await delay(4000);
   } catch (_) {}
-  await delay(15000);
+  await delay(7500);
   sendLog(udid, `Menyimpan akun...`);
   // 💾 Simpan akun
   if (mailService === 'hotmail') {
@@ -1277,7 +1286,6 @@ async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = wai
   await delay(5000);
   await driver.deleteSession(); // Hapus sesi driver
   return `✅ FB berhasil dibuat: ${email}`;
-  
   // clickDevice(udid, 81, 379); // Fokus input
   // await fixInput();
   // inputText(udid, code);
