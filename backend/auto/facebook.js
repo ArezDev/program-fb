@@ -144,7 +144,7 @@ async function createFB({ udid, appiumPort, systemPort }) {
   await delay(5000);
 
   await driver.activateApp(appService);
-  await delay(35000); // Tunggu 60 detik untuk memastikan aplikasi terbuka
+  await delay(75000); // Tunggu untuk memastikan aplikasi terbuka
 
   // cari tombol buat akun button
   let maxAttempts = 3;
@@ -488,85 +488,88 @@ async function createFB({ udid, appiumPort, systemPort }) {
   await el18.click();
   await delay(25000);
 
-  //cek pilih akun lainnya..
-    try {
+//cek pilih akun lainnya..
+  try {
       const cekError_0 = await driver.$("-android uiautomator:new UiSelector().text(\"Pilih akun lainnya\")");
       if (await cekError_0.isExisting()) await cekError_0.click();
-    } catch (_) { }
-    await delay(5000);
-  //cek tidak buat akun baru..
+  } catch (_) { }
+  await delay(5000);
+//cek tidak buat akun baru..
   try {
       const cekError_1 = await driver.$("-android uiautomator:new UiSelector().text(\"Tidak, buat akun baru\")");
       if (await cekError_1.isExisting) await cekError_1.click();
-  } catch (__) {}
-  await delay(5000);
-
-  // Relogin to Facebook
-  const reloginFB = await driver.terminateApp(appService);
-  if (reloginFB) {
-    await driver.activateApp(appService);
-    await delay(2500);
-  }
-  await delay(15000);
-
-  //FBLite error logout helper...
-  let checkLoginForm;
-  try {
-    await driver.waitUntil(async () => {
-      checkLoginForm = await driver.$("accessibility id:Facebook Lite from Meta");
-      return await checkLoginForm.isExisting();
-    }, { timeout: 8000, timeoutMsg: 'Login form not found' });
-    await delay(2000);
-    const el3 = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(0)");
-    el3.clearValue();
-    await el3.addValue(email);
-    await delay(2000);
-    const el4 = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(1)");
-    el4.clearValue();
-    await el4.addValue(passwordFB);
-    await delay(2000);
-    const el5 = await driver.$("-android uiautomator:new UiSelector().text(\"Login\")");
-    await el5.click();
-    await delay(15000);
-    // relog setelah login..
-    const relogfblite = await driver.terminateApp(appService);
-    if (relogfblite) {
-      await delay(5000);
-      await driver.activateApp(appService);
-    }
-    await delay(15000);
-    // Cek apakah sudah login
-    const el6 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.ViewGroup\").instance(7)");
-    if (await el6.isExisting()) await el6.click();
-    await delay(2000);
-    const el7 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.View\").instance(8)");
-    if (await el7.isExisting()) await el7.click();
-    await delay(4000);
-    const el9 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.View\").instance(4)");
-    if (await el9.isExisting()) await el9.click();
-    await delay(7000);
-
-    // Cek apakah ada opsi "Confirm with code instead"
-    // relog 2
-    const relogfblite2 = await driver.terminateApp(appService);
-    if (relogfblite2) {
-      await delay(5000);
-      await driver.activateApp(appService);
-    }
-    await delay(15000);
   } catch (_) {}
   await delay(5000);
 
-  // ====== ✅ Verifikasi akun ====== //
+  //FBLite error logout helper...
+  if (appService === 'com.facebook.lite') {
+    // Relogin to Facebook
+    const reloginFB = await driver.terminateApp(appService);
+    if (reloginFB) {
+      await driver.activateApp(appService);
+      await delay(2500);
+    }
+    await delay(25000);
+      let checkLoginForm;
+      try {
+        await driver.waitUntil(async () => {
+          checkLoginForm = await driver.$("accessibility id:Facebook Lite from Meta");
+          return await checkLoginForm.isExisting();
+        }, { timeout: 8000, timeoutMsg: 'Login form not found' });
+        await delay(2000);
+        const el3 = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(0)");
+        el3.clearValue();
+        await el3.addValue(email);
+        await delay(2000);
+        const el4 = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(1)");
+        el4.clearValue();
+        await el4.addValue(passwordFB);
+        await delay(2000);
+        const el5 = await driver.$("-android uiautomator:new UiSelector().text(\"Login\")");
+        await el5.click();
+        await delay(15000);
+        // relog setelah login..
+        const relogfblite = await driver.terminateApp(appService);
+        if (relogfblite) {
+          await delay(5000);
+          await driver.activateApp(appService);
+        }
+        await delay(15000);
+        // Cek apakah sudah login
+        const el6 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.ViewGroup\").instance(7)");
+        if (await el6.isExisting()) await el6.click();
+        await delay(2000);
+        const el7 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.View\").instance(8)");
+        if (await el7.isExisting()) await el7.click();
+        await delay(4000);
+        const el9 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.View\").instance(4)");
+        if (await el9.isExisting()) await el9.click();
+        await delay(7000);
+
+        // Cek apakah ada opsi "Confirm with code instead"
+        // relog 2
+        const relogfblite2 = await driver.terminateApp(appService);
+        if (relogfblite2) {
+          await delay(5000);
+          await driver.activateApp(appService);
+        }
+        await delay(15000);
+      } catch (_) {}
+      await delay(5000);
+  }
+
+// ====== Verifikasi akun ====== //
   //new UiSelector().text("Lanjutkan dalam bahasa Inggris (AS)")
-  // try {
-  //   const IstryAgain = await driver.$("-android uiautomator:new UiSelector().text(\"Coba lagi\")");
-  //   if (await IstryAgain.isExisting()) {
-  //     await IstryAgain.click();
-  //     await delay(5000);
-  //   }
-  // } catch (_) {}
-  // await delay(5000);
+  if (appService === 'com.facebook.katana') {
+    try {
+      const tryagainBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Coba lagi\")");
+      if (await tryagainBtn.isExisting()) {
+        await tryagainBtn.click();
+        await delay(5000);
+      }
+    } catch (_) {}
+    await delay(5000);
+  }
 
 // ===== get konfirmasi kode email ===== //
 async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = waitCode * 1000, udid) {
@@ -646,36 +649,18 @@ async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = wai
   }
   await delay(5000);
 
-// ====== Verifikasi pakai proxy ====== //
-  // if (proxy) {
-  //   try {
-  //     await driver.activateApp('net.typeblog.socks')
-  //         await driver.waitUntil(async () => {
-  //           const proxyBtn = await driver.$("id:net.typeblog.socks:id/switch_action_button");
-  //           return await proxyBtn.isExisting();
-  //         }, { timeout: 15000, timeoutMsg: 'Proxy app did not load' });
-  //         const proxyBtn = await driver.$("id:net.typeblog.socks:id/switch_action_button");
-  //         if (await proxyBtn.isExisting()) {
-  //           await delay(2000);
-  //           await proxyBtn.click();
-  //           sendLog(udid, '📨 Proxy app activated...');
-  //           await delay(5000);
-  //         }
-  //   } catch (error) {
-  //     sendLog(udid, `❌ Error activating proxy app: ${error.message}`);
-  //     throw error;
-  //   }
-  //   await delay(15000); // Tunggu 15 detik untuk memastikan proxy aktif
-  // }
-
-//Confirm with code instead...
-  let Confirmwithcodeinstead;
-  try {
-    Confirmwithcodeinstead = await driver.$("-android uiautomator:new UiSelector().text(\"Confirm with code instead\")");
-    if (await Confirmwithcodeinstead.isExisting()) await Confirmwithcodeinstead.click();
-    await delay(2500);
-  } catch (_) {}
-  await delay(5000);
+  //Helper fb katana
+  if (appService === 'com.facebook.katana') {
+    // Cek apakah ada opsi "Confirm with code instead"
+    try {
+      const confirmWithCode = await driver.$("-android uiautomator:new UiSelector().text(\"Confirm with code instead\")");
+      if (await confirmWithCode.isExisting()) {
+        await confirmWithCode.click();
+        await delay(5000);
+      }
+    } catch (_) {}
+    await delay(5000);
+  }
            
   
 // ====== ✅ Input OTP ke emulator ====== //
@@ -1134,10 +1119,6 @@ async function verifyFB({ udid, appiumPort, systemPort }) {
   await delay(5000);
 
 // ========== Reset IP untuk verifikasi ========== //
-  // Restart signal once and check if connection is OK before continuing
-  // Restart signal once before verification
-  // Agar restartSinyal tidak dipanggil bersamaan pada proses paralel,
-  // tambahkan mekanisme lock sederhana menggunakan file lock.
   const lockFilePath = path.join(__dirname, 'restartSinyal.lock');
 
   async function acquireLock() {
@@ -1322,864 +1303,6 @@ async function waitForCode(order_id, access_key, maxAttempts = 15, delayMs = wai
   //   // clickDevice(udid, 351, 809); // Click Saya tidak mendapatkan kode
   //   // await delay(7000);
 };
-
-//auto create facebook!
-async function createFB_appium({ udid, appiumPort, systemPort }) {
-    sendLog(udid, `Reset server appium...`);
-    //reset Appium server APK
-    await resetServerAppiumAPK(udid);
-    sendLog(udid, `✅ Reset server appium done!`);
-  
-  const caps = {
-    "appium:automationName": "UiAutomator2",
-    "platformName": "Android",
-    "appium:udid": udid,
-    "appium:systemPort": systemPort,
-    "appium:noReset": false,
-    "appium:dontStopAppOnReset": true,
-    "appium:ensureWebviewsHavePages": true,
-    "appium:nativeWebScreenshot": true,
-    "appium:newCommandTimeout": 3600,
-    "appium:connectHardwareKeyboard": true
-  };
-
-  const driver = await remote({
-    protocol: 'http',
-    hostname: '127.0.0.1',
-    port: appiumPort,
-    path: '/',
-    capabilities: caps
-  });
-
-  try {
-    await delay(5000);
-
-    //Initial settings
-    const store = new Store();
-    const reloadSettings = () => {
-      const settings = store.get('settings');
-      return {
-        changeEmail: settings.changeEmail,
-        changeEmailConfig: settings.changeEmailConfig,
-        gmailotp_access_key: settings.gmailotp_access_key,
-        mailService: settings.mailService,
-        sohibMailDomain: settings.sohibMailDomain,
-        kukuluDomain: settings.kukuluDomain,
-        hotmailConfig: settings.hotmailConfig,
-        hotmailApiKey: settings.hotmailApiKey,
-        Services_Number: settings.Services_Number,
-        use5sim: settings.use5sim,
-        use5sim_country: settings.use5sim_country,
-        use5sim_operator: settings.use5sim_operator,
-        vaksms_country: settings.vaksms_country,
-        vaksms_operator: settings.vaksms_operator,
-        proxy: settings.proxy,
-        waitCode: settings.waitCode,
-        passwordFB: settings.passwordFB,
-      };
-    };
-
-    // Reload settings!
-    let settings = reloadSettings();
-    store.onDidChange('settings', () => {
-      settings = reloadSettings();
-    });
-    //console.log('Reloaded settings:', settings);
-    let {
-      changeEmail,
-      changeEmailConfig,
-      gmailotp_access_key,
-      mailService,
-      kukuluDomain,
-      sohibMailDomain,
-      hotmailConfig,
-      hotmailApiKey,
-      Services_Number,
-      use5sim,
-      use5sim_country,
-      use5sim_operator,
-      vaksms_country,
-      vaksms_operator,
-      proxy,
-      waitCode,
-      passwordFB
-    } = settings;
-    await delay(5000);
-
-    let noverify_code = false;
-    let confirm_api = false;
-    let email = '';
-    let gmail_order_id = '';
-    let hotmail_token_refresh = '';
-    let hotmail_client_id = '';
-    let fivesim_number = '';
-    let fivesim_order_id = '';
-    let whatIsMyNames = '';
-    whatIsMyNames = generateFemaleNames(1);
-    const firstName = whatIsMyNames[0].name.split(' ')[0];
-    const lastName = whatIsMyNames[0].name.split(' ')[1];
-
-    if (Services_Number === '0') {
-      await getNumber5sim(use5sim_country, use5sim_operator).then(async data => {
-        if (data === null) {
-          await driver.deleteSession();
-          await delay(3000);
-          sendLog(udid, `❌ Nomer 5sim kosong atau stok habis !`);
-          throw new Error('Failed to get number from 5sim');
-        }
-        fivesim_number = data.split('|')[0];
-        fivesim_order_id = data.split('|')[1];
-      });
-      await delay(5000);
-    } else if (Services_Number === '1') {
-      await getNumber_vaksms(vaksms_country, vaksms_operator).then(async data => {
-        if (data === null) {
-          await driver.deleteSession();
-          await delay(3000);
-          sendLog(udid, `❌ Nomer 5sim kosong atau stok habis !`);
-          throw new Error('Failed to get number from 5sim');
-        }
-        fivesim_number = data.tel;
-        fivesim_order_id = data.idNum;
-      });
-      await delay(5000);
-    }
-    
-    await delay(5000);
-
-    // clear app data
-    // await delay(5000);
-    // clearAppData (udid, appService);
-    // await delay(5000);
-    clearAppData(udid, appService);
-    await delay(5000);
-
-    //set proxy untuk daftar akun
-    if (proxy) {
-      //await driver.terminateApp('net.typeblog.socks');
-      closeApp(udid, 'net.typeblog.socks');
-      await delay(7000);
-      sendLog(udid, '📨 open proxy app...');
-      //await driver.activateApp('net.typeblog.socks');
-      openApp(udid, 'net.typeblog.socks');
-      await delay(8000);
-      sendLog(udid, '📨 waiting for proxy app to load...');
-      //const proxyBtn = await driver.$("id:net.typeblog.socks:id/switch_action_button");
-      //await proxyBtn.waitForExist({ timeout: 15000 });
-      //await proxyBtn.click();
-      clickDevice(udid, 619, 76); // Click on the proxy switch button
-      await delay(15000);
-      sendLog(udid, '📨 proxy app activated...');
-    }
-
-    //start Random devices!
-    // await randomizeDeviceInfo(udid);
-    // await delay(2000);
-
-    //await driver.removeApp(appService);
-
-    //const findAPK = path.join(__dirname, 'apk');
-    //await driver.installApp(path.join(findAPK, 'lite.apk'));
-    //const findAPK = path.join(process.resourcesPath, 'apk');
-
-    // const apkPath = path.join(
-    //   app.isPackaged ? process.resourcesPath : __dirname,
-    //   'apk',
-    //   'lite.apk'
-    // );
-    // await driver.installApp(apkPath);
-    // await delay(7000);
-
-    // =========== CHECK IF ALREADY OPEN =============== //
-    sendLog(udid, `Membuka aplikasi facebook...`);
-    await driver.activateApp(appService);
-    //openApp(udid, appService);
-    await delay(15000);
-
-    const reg = await driver.$("-android uiautomator:new UiSelector().text(\"Buat akun baru\")");
-    if (await reg.isExisting()) await reg.click();
-    await delay(5000);
-    if (!(await reg.isExisting())) {
-      sendLog(udid, `❌ Gagal mendaftar...`);
-      await delay(5000);
-      await driver.deleteSession();
-      await delay(7000);
-    } else {
-      sendLog(udid, '📩 Loading...');
-      if (await reg.isExisting()) await reg.click();
-      await delay(5000);
-    }
-
-    // const AllowBtn = await driver.$("id:com.android.packageinstaller:id/permission_deny_button");
-    // await AllowBtn.waitForExist({ timeout: 30000 });
-
-    // // =========== ALLOW PERMISSIONS =============== //
-    // if (await AllowBtn.isExisting()) {
-    //   await AllowBtn.click();
-    //   await delay(2000);
-    // }
-    // await delay(5000);
-
-    // =========== GET STARTED =============== //
-    // const startTexts = [
-    //   "Get started",
-    //   "Mulai",
-    //   "Create New Account",
-    //   "Buat akun baru"
-    // ];
-    // for (const text of startTexts) {
-    //   try {
-    //     const btn = await driver.$(`-android uiautomator:new UiSelector().text("${text}")`);
-    //     await btn.waitForExist({ timeout: 5000 });
-    //     if (await btn.isExisting()) {
-    //       sendLog(udid, `📩 Click: ${text}`);
-    //       await btn.click();
-    //       await delay(2000);
-    //     } else {
-    //       sendLog(udid, `❌ Gagal mendaftar...`);
-    //       await delay(5000);
-    //       await driver.deleteSession();
-    //       await delay(7000);
-    //     }
-    //   } catch (_) {}
-    //   await delay(2000);
-    // }
-
-    // =========== NAME =============== //
-    sendLog(udid, `Nama: ${firstName} ${lastName}`);
-    const firstNameField = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(0)");
-    await firstNameField.setValue(firstName);
-
-    const lastNameField = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.EditText\").instance(1)");
-    await lastNameField.setValue(lastName);
-
-    //sendLog(udid, `next..`);
-    const nextBtn0 = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.ViewGroup\").instance(18)");
-    await nextBtn0.click();
-    await delay(15000);
-
-    // =========== Birthday =============== //
-    //let randomYears = Math.floor(Math.random() * 5) + 5;
-    let randomYears = Math.floor(Math.random() * 2) + 3; // between 3 and 4
-    for (let i = 0; i < randomYears; i++) {
-      swipeDevice(udid, 509, 644, 507, 1243, 500);
-      await delay(800);
-    }
-    const confirmDateBtn = await driver.$("id:android:id/button1");
-    if (!(await confirmDateBtn.isExisting())) {
-      sendLog(udid, `❌ Gagal mendaftar...`);
-      await delay(5000);
-      await driver.deleteSession();
-      await delay(7000);
-    }
-    await confirmDateBtn.click();
-    await delay(2000);
-    sendLog(udid, 'Pilih Tahun...');
-
-    //sendLog(udid, `Next...`);
-    let nextBtn;
-    try {
-      nextBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Next\")");
-      if (!(await nextBtn.isExisting())) {
-        nextBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
-      }
-    } catch (e) {
-      // fallback in case of error
-      nextBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Next\")");
-    }
-    const isNextBtnFound = await nextBtn.isExisting();
-    if (isNextBtnFound) await nextBtn.click();
-    await delay(5000);
-
-    // =========== GENDER =============== //
-    let genderSelector;
-    try {
-      genderSelector = await driver.$("-android uiautomator:new UiSelector().description(\"Female\")");
-      if (!(await genderSelector.isExisting())) {
-        genderSelector = await driver.$("-android uiautomator:new UiSelector().description(\"Perempuan\")");
-      }
-      await genderSelector.waitForExist({timeout:35000});
-      sendLog(udid, 'Memilih jenis kelamin...');
-      const isGenderSelectorFound = await genderSelector.isExisting();
-      if (isGenderSelectorFound) await genderSelector.click();
-    } catch (__) {}
-    await delay(3000);
-
-    if (isNextBtnFound) await nextBtn.click();
-    await delay(5000);
-
-    // ========== Izinkan ========== //
-    const allowSelectors = [
-      'id:com.android.packageinstaller:id/permission_allow_button',
-      '-android uiautomator:new UiSelector().resourceId("com.android.packageinstaller:id/permission_allow_button")',
-      'xpath://android.widget.Button[@resource-id="com.android.packageinstaller:id/permission_allow_button"]'
-    ];
-    for (const selector of allowSelectors) {
-      try {
-      const btn = await driver.$(selector);
-      if (await btn.isExisting()) {
-        await btn.click();
-        await delay(1000);
-      }
-      } catch (_) {}
-      await delay(1000);
-    }
-    await delay(2000);
-
-    // =========== EMAIL =============== //
-    if (use5sim) {
-      //sendLog(udid, `Memakai 5sim number: ${fivesim_number}`);
-    } else {
-      let signupWithEmail;
-        try {
-          signupWithEmail = await driver.$('-android uiautomator:new UiSelector().text("Sign up with email")');
-          if (!(await signupWithEmail.isExisting())) {
-            signupWithEmail = await driver.$('-android uiautomator:new UiSelector().text("Daftar dengan email")');
-          }
-        } catch (__) {}
-        const isSignupWithEmail = await signupWithEmail.isExisting();
-        if (isSignupWithEmail) await signupWithEmail.click();
-    }
-    await delay(5000);
-
-    // ================= Email INPUT ==============//
-    const emailInput = await driver.$("class name:android.widget.EditText");
-    await emailInput.clearValue();
-    if (changeEmail) {
-      // generate email untuk konfirm change email nanti.
-      //email = await getMail();
-      if ( changeEmailConfig === '0' ) {
-        await emailInput.setValue(generateRandomIndoNumber());
-      } else if ( changeEmailConfig === '1' ) {
-        await emailInput.setValue(`${whatIsMyNames[0].email}@gmail.com`);
-      }
-
-    } else {
-
-      // =================== generate reg services =================== //
-        if (mailService === 'gmailotp') {
-          const getGmail = await createGmail(gmailotp_access_key);
-          if (getGmail === null) {
-            sendLog(udid, `❌ stok gmail kosong!`);
-            throw new Error('Failed to get email from Gmail OTP');
-          } else {
-            email = getGmail.email;
-            gmail_order_id = getGmail.order_id;
-          }
-        } else if (mailService === 'sohibmail') {
-          email = `${whatIsMyNames[0].email}@${sohibMailDomain}`;
-        } else if (mailService === 'hotmail') {
-          //hotmail
-          const getHotmailInfo = await createHotmail(hotmailConfig, hotmailApiKey);
-          email = getHotmailInfo.email;
-          hotmail_token_refresh = getHotmailInfo.refresh_token;
-          hotmail_client_id = getHotmailInfo.client_id;
-          hotmail_full_info = getHotmailInfo.data;
-          await emailInput.setValue(email);
-        } else if (mailService === 'fexplus') {
-          email = await createFexboxMail();
-        } else if (mailService === 'tempmail') {
-          email = await createTempMail();
-        } else if (mailService === 'kukulu') {
-          email = await createKukulu(whatIsMyNames[0].email, '@' + kukuluDomain);
-        }
-        await delay(5000);
-        sendLog(udid, `📩 ${use5sim ? fivesim_number : email}`);
-        await emailInput.setValue(use5sim ? fivesim_number : email);
-      // =================== generate reg services =================== //
-    }
-
-    if (isNextBtnFound) await nextBtn.click();
-    await delay(5000);
-
-    //cek Lanjutkan membuat akun
-    try {
-      const LanjutkanMembuatAkun = await driver.$('-android uiautomator:new UiSelector().text("Continue creating account")');
-      if (await LanjutkanMembuatAkun.isExisting()) {
-        await LanjutkanMembuatAkun.click();
-        await delay(2000);
-      } else {
-        const XpathLanjutkanMembuatAkun = await driver.$('xpath://android.view.View[@content-desc="Continue creating account"]');
-        if (await XpathLanjutkanMembuatAkun.isExisting()) {
-          await XpathLanjutkanMembuatAkun.click();
-          await delay(5000);
-        }
-      }
-    } catch (__) {}
-    await delay(5000);
-    try {
-      const LanjutkanMembuatAkun = await driver.$('-android uiautomator:new UiSelector().text("Lanjutkan membuat akun")');
-      if (await LanjutkanMembuatAkun.isExisting()) {
-        await LanjutkanMembuatAkun.click();
-        await delay(2000);
-      } else {
-        const XpathLanjutkanMembuatAkun = await driver.$('xpath://android.view.View[@content-desc="Lanjutkan membuat akun"]');
-        if (await XpathLanjutkanMembuatAkun.isExisting()) {
-          await XpathLanjutkanMembuatAkun.click();
-          await delay(5000);
-        }
-      }
-    } catch (__) {}
-    await delay(5000);
-
-    // =========== PASSWORD =============== //
-    const passwordInput = await driver.$("class name:android.widget.EditText");
-    await passwordInput.waitForExist({ timeout: 5000 });
-    if (await passwordInput.isExisting()) await passwordInput.setValue(passwordFB);
-    await delay(2000);
-    
-    if (isNextBtnFound) await nextBtn.click();
-    await delay(5000);
-
-    //const saveDevices = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.ViewGroup\").instance(8)");
-    const saveDevices = await driver.$("-android uiautomator:new UiSelector().text(\"Lain Kali\")");
-    await saveDevices.click();
-    await delay(5000);
-
-    const agreeBtn = await driver.$("-android uiautomator:new UiSelector().className(\"android.view.ViewGroup\").instance(14)");
-    await agreeBtn.click();
-    await delay(35000);
-
-    //cek pilih akun lainnya..
-    try {
-      const cekError_0 = await driver.$("-android uiautomator:new UiSelector().text(\"Pilih akun lainnya\")");
-      if (await cekError_0.isExisting()) await cekError_0.click();
-    } catch (_) { }
-    await delay(5000);
-
-    //cek tidak buat akun baru..
-    try {
-      const cekError_1 = await driver.$("-android uiautomator:new UiSelector().text(\"Tidak, buat akun baru\")");
-      if (await cekError_1.isExisting) await cekError_1.click();
-    } catch (__) {}
-    await delay(5000);
-
-    //cek nomer code via sms
-    if (use5sim) {
-      try {
-        const sendCodeViaSMS = await driver.$("-android uiautomator:new UiSelector().text(\"Send code via SMS\")");
-        if (await sendCodeViaSMS.isExisting()) {
-          await sendCodeViaSMS.click();
-          await delay(5000);
-          const continueBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Continue\")");
-          if (await continueBtn.isExisting()) {
-            await continueBtn.click();
-            await delay(5000);
-          } else {
-            console.log(`${udid}::❌ Continue button not found!`);
-          }
-        } else {
-          console.log(`${udid}::❌ Send code via SMS button not found!`);
-          const sendSMS = await driver.$("accessibility id:Send code via SMS");
-          if (await sendSMS.isExisting()) {
-            await sendSMS.click();
-            await delay(5000);
-          } else {
-            console.log(`${udid}::❌ Send code via SMS accessibility not found!`);
-          }
-          const continueBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Continue\")");
-          if (await continueBtn.isExisting()) {
-            await continueBtn.click();
-            await delay(5000);
-          } else {
-            console.log(`${udid}::❌ Continue button not found!`);
-          }
-        }
-      } catch (_) {}
-    }
-    await delay(5000);
-
-    // =========== Change Email =============== //
-    if (changeEmail) {
-      //resend and change!
-      const resendAndChange = async (text) => {
-        const IdidntGetCode = driver.$("-android uiautomator:new UiSelector().text(\"I didn’t get the code\")");
-        if (await IdidntGetCode.isExisting()) await IdidntGetCode.click();
-        await delay(7000);
-        const ChangeEmailBtn = driver.$("-android uiautomator:new UiSelector().description(\""+text+"\")");
-        if (await ChangeEmailBtn.isExisting()) await ChangeEmailBtn.click();
-        await delay(5000);
-      };
-      if (changeEmailConfig==='0'){
-        try {
-          const sendCodeViaSMS = await driver.$("-android uiautomator:new UiSelector().text(\"Send code via SMS\")");
-          if (await sendCodeViaSMS.isExisting()) {
-            await sendCodeViaSMS.click();
-            await delay(5000);
-            const continueBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Continue\")");
-            if (await continueBtn.isExisting()) {
-              await continueBtn.click();
-              await delay(5000);
-            } else {
-              console.log(`${udid}::❌ Continue button not found!`);
-            }
-          } else {
-            console.log(`${udid}::❌ Send code via SMS button not found!`);
-            const sendSMS = await driver.$("accessibility id:Send code via SMS");
-            if (await sendSMS.isExisting()) {
-              await sendSMS.click();
-              await delay(5000);
-            } else {
-              console.log(`${udid}::❌ Send code via SMS accessibility not found!`);
-            }
-            const continueBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Continue\")");
-            if (await continueBtn.isExisting()) {
-              await continueBtn.click();
-              await delay(5000);
-            } else {
-              console.log(`${udid}::❌ Continue button not found!`);
-            }
-          }
-        } catch (_) {}
-        await delay(5000);
-      // =================== generate reg services =================== //
-        if (use5sim) {
-          await resendAndChange('Change mobile number');
-          await delay(5000);
-        }
-        if (mailService === 'sohibmail') {
-          await resendAndChange('Change email');
-          email = `${whatIsMyNames[0].email}@${sohibMailDomain}`;
-        } else if (mailService === 'hotmail') {
-          await resendAndChange('Change email');
-          //hotmail
-          const getHotmailInfo = await createHotmail(parseInt(hotmailConfig), hotmailApiKey);
-          email = getHotmailInfo.email;
-          hotmail_token_refresh = getHotmailInfo.refresh_token;
-          hotmail_client_id = getHotmailInfo.client_id;
-          hotmail_full_info = getHotmailInfo.data;
-          await emailInput.setValue(email);
-        } else if (mailService === 'fexplus') {
-          await resendAndChange('Change email');
-          email = await createFexboxMail();
-        } else if (mailService === 'tempmail') {
-          await resendAndChange('Change email');
-          email = await createTempMail();
-        } else if (mailService === 'kukulu') {
-          await resendAndChange('Change email');
-          email = await createKukulu(whatIsMyNames[0].email, '@' + kukuluDomain);
-        }
-
-        await delay(5000);
-        sendLog(udid, `Change: ${use5sim ? fivesim_number : email}`);
-        await emailInput.clearValue();
-        await emailInput.setValue(use5sim ? fivesim_number : email);
-        await delay(5000);
-        const next = driver.$("-android uiautomator:new UiSelector().text(\"Next\")");
-        if (next.isExisting())  await next.click();
-        await delay(2000);
-        const next2 = driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
-        if (next2.isExisting())  await next2.click();
-        await delay(5000);
-
-      // =================== generate reg services =================== //
-      } else if (changeEmailConfig==='1') {
-
-        // =================== generate reg services =================== //
-        if (use5sim) {
-          await resendAndChange('Change mobile number');
-          await delay(5000);
-        }
-        if (mailService === 'sohibmail') {
-          await resendAndChange('Change email');
-          email = `${whatIsMyNames[0].email}@${sohibMailDomain}`;
-        } else if (mailService === 'hotmail') {
-          await resendAndChange('Change email');
-          //hotmail
-          const getHotmailInfo = await createHotmail(parseInt(hotmailConfig), hotmailApiKey);
-          email = getHotmailInfo.email;
-          hotmail_token_refresh = getHotmailInfo.refresh_token;
-          hotmail_client_id = getHotmailInfo.client_id;
-          hotmail_full_info = getHotmailInfo.data;
-          await emailInput.setValue(email);
-        } else if (mailService === 'fexplus') {
-          await resendAndChange('Change email');
-          email = await createFexboxMail();
-        } else if (mailService === 'tempmail') {
-          await resendAndChange('Change email');
-          email = await createTempMail();
-        } else if (mailService === 'kukulu') {
-          await resendAndChange('Change email');
-          email = await createKukulu(whatIsMyNames[0].email, '@' + kukuluDomain);
-        }
-
-        await delay(5000);
-        sendLog(udid, `Change: ${use5sim ? fivesim_number : email}`);
-        await emailInput.clearValue();
-        await emailInput.setValue(use5sim ? fivesim_number : email);
-        await delay(5000);
-        const next = driver.$("-android uiautomator:new UiSelector().text(\"Next\")");
-        if (next.isExisting())  await next.click();
-        await delay(2000);
-        const next2 = driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
-        if (next2.isExisting())  await next2.click();
-        await delay(5000);
-        
-      }
-    }
-
-    //set proxy untuk konfirmasi akun
-    if (proxy) {
-      //await driver.terminateApp('net.typeblog.socks');
-      closeApp(udid, 'net.typeblog.socks');
-      await delay(7000);
-      sendLog(udid, '📨 open proxy app...');
-      //await driver.activateApp('net.typeblog.socks');
-      openApp(udid, 'net.typeblog.socks');
-      await delay(8000);
-      sendLog(udid, '📨 waiting for proxy app to load...');
-      //const proxyBtn = await driver.$("id:net.typeblog.socks:id/switch_action_button");
-      //await proxyBtn.waitForExist({ timeout: 15000 });
-      //await proxyBtn.click();
-      clickDevice(udid, 619, 76); // Click on the proxy switch button
-      await delay(15000);
-      sendLog(udid, '📨 proxy app activated...');
-    }
-
-    // =========== VERIFY FB KATANA =============== //
-    clearAppData(udid, appService);
-    await delay(5000);
-    await driver.activateApp(appService);
-    await delay(15000);
-
-    //relogfb
-    closeApp(udid, appService);
-    await delay(5000);
-    await driver.activateApp(appService);
-    await delay(15000);
-
-    // =========== LOGIN FB KATANA =============== //
-    const LanjutFBkatana = await driver.$("-android uiautomator:new UiSelector().text(\"Lanjut\")");
-    if (await LanjutFBkatana.isExisting()) await LanjutFBkatana.click();
-    await delay(5000);
-    const inputPass = await driver.$("class name:android.widget.EditText");
-    if (await inputPass.isExisting()) await inputPass.setValue(passwordFB);
-    await delay(2000);
-    const LoginFBkatana = await driver.$("-android uiautomator:new UiSelector().text(\"Login\")");
-    if (await LoginFBkatana.isExisting()) await LoginFBkatana.click();
-    await delay(15000);
-
-    //relogfb 2
-    closeApp(udid, appService);
-    await delay(5000);
-    await driver.activateApp(appService);
-    await delay(15000);
-    
-    // clickDevice(udid, 360, 710); // Click Login
-    // await delay(5000);
-    // clickDevice(udid, 135, 587); // email
-    // inputText(udid, use5sim ? fivesim_number : email);
-    // await delay(2000);
-    // clickDevice(udid, 130, 678); // email
-    // inputText(udid, passwordFB);
-    // await delay(2000);
-
-    // //Login
-    // clickDevice(udid, 355, 768); // Click Login
-    // await delay(15000);
-    
-
-    // ================ Verify ================ //
-
-      const verifAndDeleteSession = async (code) => {
-
-        // =========== VERIFY FB LITE =============== //
-        sendLog(udid, `📩 Verifying account...`);
-        // const codeInput = driver.$("class name:android.widget.EditText");
-          // if (await codeInput.isExisting()) await codeInput.setValue(code);
-          // //Verify
-          // const confirmBtn = driver.$("-android uiautomator:new UiSelector().className(\"android.view.ViewGroup\").instance(12)");
-          // if (await confirmBtn.isExisting()) await confirmBtn.click();
-          // await delay(15000);
-        // =========== VERIFY FB KATANA =============== //
-        //const codeInput = await driver.$("class name:android.widget.EditText");
-        //if (await codeInput.isExisting()) await codeInput.addValue(code);
-        clickDevice(udid, 360, 710); // input code
-        inputText(udid, ' ');
-        await delay(1000);
-        inputText(udid, ' ');
-        await delay(1000);
-        clearText(udid);
-        await delay(1000);
-        inputText(udid, code);
-        await delay(2000);
-        clickDevice(udid, 352, 475); // Click Verify
-        await delay(15000);
-        // const next = await driver.$("-android uiautomator:new UiSelector().description(\"Berikutnya\")");
-        // if (await next.isExisting()) await next.click();
-        await delay(5000);
-
-        //Save akun!
-        await saveAccounts(udid, '', use5sim ? fivesim_number : email, 'katana');
-        await delay(15000);
-        await driver.removeApp(appService);
-        await delay(5000);
-        //end session!
-        await driver.deleteSession();
-        return;
-      };
-
-      const resendCode = async () => {
-        const IdidntGetCode = driver.$("-android uiautomator:new UiSelector().text(\"I didn’t get the code\")");
-        if (await IdidntGetCode.isExisting()) await IdidntGetCode.click();
-        await delay(7000);
-        const ResendCode = driver.$("-android uiautomator:new UiSelector().description(\"Resend confirmation code\")");
-        if (await ResendCode.isExisting()) await ResendCode.click();
-      };
-
-      sendLog(udid, `⏳ Waiting code...`);
-      await delay(waitCode * 1000);
-
-      let code = null;
-      let attempts = 0;
-      const maxAttempts = 10; // Maximum attempts to get the code
-      const getCode = setInterval(async () => {
-        try {
-          attempts++;
-          if (attempts > maxAttempts) {
-            clearInterval(getCode);
-            sendLog(udid, `❌ Failed to get code after ${maxAttempts} attempts.`);
-            await driver.deleteSession();
-            return;
-          }
-            // =================== getcode 5sim/vaksms =================== //
-            if (Services_Number === '0') {
-              sendLog(udid, `📩 ${fivesim_number}`);
-              code = await getCode5sim(fivesim_order_id, 'check');
-              await delay(2000);
-              if (code === null) {
-                const code_failed = await getCode5sim(fivesim_order_id, 'cancel');
-                sendLog(udid, `❌ ${JSON.stringify(code_failed)}`);
-              } else {
-                const code_success = await getCode5sim(fivesim_order_id, 'finish');
-                sendLog(udid, `✅ Code received: ${JSON.stringify(code_success)}`);
-                await delay(5000);
-                await verifAndDeleteSession(code);
-              }
-            } else if (Services_Number === '1') {
-              sendLog(udid, `📩 ${fivesim_number}`);
-              code = await getCode_vaksms(fivesim_order_id);
-              await delay(2000);
-              if (code === null) {
-                sendLog(udid, `❌ ${fivesim_number}`);
-                await delay(2000);
-                sendLog(udid, 'Mencoba mendapatkan kode lagi');
-                await delay(7000);
-                code = await getCode5sim(fivesim_order_id);
-                sendLog(udid, `✅ Code received: ${code} !`);
-                await delay(5000);
-                await verifAndDeleteSession(code);
-              } else {
-                const code_success = await getCode5sim(fivesim_order_id, 'finish');
-                sendLog(udid, `✅ Code received: ${JSON.stringify(code_success)}`);
-                await delay(5000);
-                await verifAndDeleteSession(code);
-              }
-            }
-            // =================== getcode mail services =================== //
-            if (mailService === 'gmailotp') {
-              const c = await getCodeGmail(gmail_order_id, gmailotp_access_key);
-              if (c === null) {
-                sendLog(udid, `⏳ ${email}`);
-              } else {
-                clearInterval(getCode);
-                sendLog(udid, `✅ Code received: ${c}`);
-                await delay(5000);
-                await verifAndDeleteSession(c);
-              }
-            } else if (mailService === 'hotmail') {
-              code = await getCodeHotmail(email, hotmail_token_refresh, hotmail_client_id);
-              sendLog(udid, `✅ Code received: ${code}`);
-              await delay(5000);
-              await verifAndDeleteSession(code);
-            } else if (mailService === 'kukulu') {
-              code = await getCodeKukulu(email);
-              sendLog(udid, `✅ Code received: ${code}`);
-              await delay(5000);
-              await verifAndDeleteSession(code);
-            } else if (mailService === 'tempmail') {
-              code = await getCodeTempMail(email);
-              sendLog(udid, `✅ Code received: ${code}`);
-              await delay(5000);
-              await verifAndDeleteSession(code);
-            } else if (mailService === 'fexplus') {
-              await getCodeFexboxMail(email).then(async (c) => {
-                if (c === null) {
-                  sendLog(udid, `❌ ${email}`);
-                  await delay(5000);
-                  await driver.deleteSession();
-                } else {
-                  sendLog(udid, `✅ Code received: ${c}`);
-                  await delay(2000);
-                  await verifAndDeleteSession(c);
-                }
-              });
-            } else if (mailService === 'sohibmail') {
-              emaildewe(email, driver, async (c) => {
-                if (c && c.code) {
-                  sendLog(udid, `✅ Code received: ${JSON.stringify(c.code)}`);
-                  await verifAndDeleteSession(c.code);
-                }
-              });
-            }
-        } catch (err) {
-          console.error(`[ERROR] getCode interval failed:`, err);
-        }
-      }, 25000); // Check every 15 seconds
-
-      if (noverify_code) {
-        sendLog(udid, '📩 Create fb noverify code...');
-        await delay(2000);
-      }
-
-      if (confirm_api) {
-          const data = await getCokisFBLite(udid);
-          console.log(data.c_user);
-          if (data.c_user) {
-            try {
-              const result = await LoginFacebook(data.c_user, FB_PASSWORD);
-              if (result.success) {
-                VerifyFacebook(result.cookies, data.c_user, email, code).then(async d=>{
-
-                  if (d) {
-                    console.log(d);
-                    console.log("Akun COOKIE:", result.cookies);
-                    //const cookieStr = `${code ? code + '|' : ''}${result.c_user}|${FB_PASSWORD}| ;${result.cookies};`;
-                    const cookieStr = `${result.c_user}|${FB_PASSWORD}| ;${result.cookies}; |${email}`;
-                    const savecokis = await axios.post(COOKIE_UPLOAD_URL, { cokis: cookieStr, userId: 'AKU' });
-                    if (savecokis.status === 200) {
-                      console.log('Account saved:', result.c_user);
-                      sendLog(udid, `✅ Akun berhasil disimpan: ${result.c_user}`);
-                    }
-                  }
-
-                });
-                
-              } else {
-                console.log(result);
-                console.error("Gagal login:", result.error || "akun mungkin checkpoint.");
-              }
-            } catch (error) {
-              console.log(error);
-            }
-          
-        }
-      }
-
-    //khusus FB gede
-    // const skipBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Skip\")");
-    // await skipBtn.waitForExist({ timeout: 10000 });
-    // await skipBtn.click();
-    // await delay(15000);
-    //return 'Akun berhasil dibuat: ' + (use5sim ? fivesim_number : email);
-
-  } catch (err) {
-    console.error('❌ Error:', err.message);
-    //await driver.saveScreenshot(`./error/error-${Date.now()}.png`);
-    await driver.deleteSession();
-    return 'Terjadi kesalahan: ' + err.message;
-  }
-}
 
 //getcokis all manual
 async function getAllCokisFB({ udid, appiumPort, systemPort }) {
