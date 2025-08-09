@@ -9,11 +9,14 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "build": {
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "cookies/**"
+    ],
     "appId": "com.arezdev.autokrit",
     "productName": "Auto Create By ArezDev",
     "directories": {
-      "output": "autoverifybyarezdev"
+      "output": "autofb"
     },
     "win": {
       "target": "nsis",
@@ -36,11 +39,8 @@
       }
     ],
     "files": [
-      "main.js",
-      "preload.js",
-      "renderer/**",
-      "backend/**",
-      "logo.ico"
+      "**/*",
+      "!cookies/**"
     ]
   },
   "keywords": [],
