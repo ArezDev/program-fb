@@ -170,8 +170,8 @@ async function startAllAppiumServers() {
 function createWindow() {
   const win = new BrowserWindow({
     width: 550,
-    height: 500,
-    resizable: false,
+    height: 550,
+    resizable: true,
     autoHideMenuBar: true,
     icon: 'logo.ico',
     webPreferences: {

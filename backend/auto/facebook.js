@@ -284,6 +284,24 @@ async function createFB({ udid, appiumPort, systemPort }) {
   await delay(3000);
   const el5 = await driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
   await el5.click();
+  await delay(7000);
+
+  //cek error input nama...
+  try {
+    const errorInputName = await driver.$("accessibility id:Piilih nama Anda");
+    if (await errorInputName.isExisting()) {
+      await delay(2000);
+      const selectNames = await driver.$("-android uiautomator:new UiSelector().className(\"android.widget.ImageView\").instance(0)");
+      if (await selectNames.isExisting()) await selectNames.click();
+      await delay(2000);
+      const nextBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
+      if (await nextBtn.isExisting()) await nextBtn.click();
+      await delay(2500);
+      const nextBtn2 = await driver.$("-android uiautomator:new UiSelector().text(\"Next\")");
+      if (await nextBtn2.isExisting()) await nextBtn2.click();
+      await delay(5000);
+    }
+  } catch (_) {}
   await delay(5000);
 
   //cek Birthday scroll...
@@ -315,7 +333,7 @@ async function createFB({ udid, appiumPort, systemPort }) {
   await nextBirthdays.click();
   await delay(2000);
   await nextBirthdays.click();
-  await delay(5000);
+  await delay(10000);
 
   //gender usia input...
   try {
@@ -422,15 +440,21 @@ async function createFB({ udid, appiumPort, systemPort }) {
     sendLog(udid, email);
     await delay(5000);
     const inputEmails = await driver.$("class name:android.widget.EditText");
-    // if (await inputEmails.isExisting()) await inputEmails.click();
-    // await delay(2000);
-    // await inputEmails.clearValue();
     if (await inputEmails.isExisting()) await inputEmails.clearValue();
     await delay(1500);
     await inputEmails.setValue(email);
     await delay(2500);
     const el13 = await driver.$("-android uiautomator:new UiSelector().text(\"Berikutnya\")");
     await el13.click();
+    await delay(5000);
+    const isEmailvalid = await driver.$("accessibility id:Sudah ada akun yang terkait dengan email ini.");
+    if (await isEmailvalid.isExisting()) {
+      sendLog(udid, `❌ Email sudah terdaftar!`);
+      await delay(5000);
+      await driver.deleteSession(); // Hapus sesi driver
+      return;
+    }
+    await delay(5000);
   } catch (error) {
     return;
   }
@@ -561,12 +585,12 @@ async function createFB({ udid, appiumPort, systemPort }) {
 // ====== Verifikasi akun ====== //
   //new UiSelector().text("Lanjutkan dalam bahasa Inggris (AS)")
   if (appService === 'com.facebook.katana') {
+    //await delay(8000);
     try {
       const tryagainBtn = await driver.$("-android uiautomator:new UiSelector().text(\"Coba lagi\")");
-      if (await tryagainBtn.isExisting()) {
-        await tryagainBtn.click();
-        await delay(5000);
-      }
+      await tryagainBtn.waitForExist({ timeout: 15000, timeoutMsg: 'Try again button not found' });
+      if (await tryagainBtn.isExisting()) await tryagainBtn.click();
+      await delay(5000);
     } catch (_) {}
     await delay(5000);
   }
